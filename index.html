@@ -1,0 +1,2945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维他奶包装大挑战 / Vitasoy Packaging Challenge</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #F0F4F8;
+            color: #1E293B;
+            overflow-x: hidden;
+        }
+        .vitasoy-blue-grad {
+            background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+        }
+        #canvas-container {
+            width: 100%;
+            height: 410px;
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #FFFFFF 0%, #DBEAFE 100%);
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
+        @media (min-width: 1024px) {
+            #canvas-container {
+                height: 490px;
+            }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        @keyframes popSuccess {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        .animate-pop { animation: popSuccess 0.35s ease-out; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- ==================== 1. 学生登录与身份追踪弹窗 ==================== -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border-2 border-sky-400/40">
+            <div class="vitasoy-blue-grad px-6 py-5 text-white flex items-center justify-between gap-2">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span data-i18n="loginBadge" class="inline-block px-2.5 py-0.5 text-xs font-extrabold bg-amber-300 text-amber-950 rounded-full">
+                            3D 空间探究 · 分步公式推导版
+                        </span>
+                        <button type="button" onclick="toggleLanguage()" class="px-2.5 py-0.5 text-xs font-black bg-white/20 hover:bg-white/30 text-white rounded-full border border-white/40 transition">
+                            🌐 <span class="lang-toggle-label">中 / EN</span>
+                        </button>
+                    </div>
+                    <h2 data-i18n="appTitle" class="text-xl font-black tracking-tight">维他奶包装大挑战</h2>
+                    <p data-i18n="loginSubtitle" class="text-xs text-sky-100 mt-0.5">从正方体到 24 盒整箱与自定义装箱，探索最省纸的奥秘</p>
+                </div>
+                <svg class="w-14 h-14 flex-shrink-0 drop-shadow" viewBox="0 0 64 64" fill="none">
+                    <rect x="17" y="10" width="30" height="46" rx="4" fill="#0284C7" stroke="#BAE6FD" stroke-width="2.5"/>
+                    <ellipse cx="26" cy="18" rx="6" ry="3.5" fill="#DC2626"/>
+                    <text x="26" y="19.5" fill="#FFFFFF" font-size="4.2" font-weight="bold" text-anchor="middle">Vitasoy</text>
+                    <text x="33" y="38" fill="#FFFFFF" font-size="11" font-weight="900" text-anchor="middle" transform="rotate(-12 33 38)">維他奶</text>
+                    <path d="M40 10L48 4" stroke="#FBBF24" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="bg-sky-50 border border-sky-200 rounded-xl p-3 text-xs text-sky-900 leading-relaxed space-y-1">
+                    <div data-i18n="specTitle" class="font-extrabold text-sky-800">📐 本课实验规格说明：</div>
+                    <div data-i18n="specCube">• <strong>正方体礼盒</strong>：棱长 5cm（单面 25cm²，单盒总面积 150cm²）</div>
+                    <div data-i18n="specVitasoy">• <strong>蓝盒维他奶</strong>：长 5cm × 宽 4cm × 高 10cm（大面 50cm²、中面 40cm²、小面 20cm²，单盒总面积 220cm²）</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1"><span data-i18n="labelName">学生姓名</span> <span class="text-red-500">*</span></label>
+                    <input type="text" id="input-student-name" data-i18n-placeholder="placeholderName" placeholder="请输入你的真实姓名（如：陈思源）"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1"><span data-i18n="labelId">学生学号</span> <span class="text-red-500">*</span></label>
+                    <input type="text" id="input-student-id" data-i18n-placeholder="placeholderId" placeholder="请输入学号（如：20260801）"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition">
+                </div>
+                <div id="login-error" data-i18n="loginError" class="hidden text-xs text-red-600 font-semibold bg-red-50 p-2.5 rounded-lg border border-red-200">
+                    请完整填写学生姓名和学号后再开始实验！
+                </div>
+
+                <div class="pt-1 flex flex-col sm:flex-row gap-2.5">
+                    <button id="btn-fill-demo" type="button" data-i18n="btnFillDemo"
+                        class="sm:w-2/5 py-2.5 px-3 rounded-xl border border-slate-300 text-slate-600 font-semibold text-xs hover:bg-slate-100 transition">
+                        填入示例学生
+                    </button>
+                    <button id="btn-start-game" type="button" data-i18n="btnStartGame"
+                        class="sm:w-3/5 py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-lg shadow-sky-600/30 transition">
+                        进入 3D 探究实验室 →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. 顶部常驻：学生状态与行为遥测监控栏 ==================== -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl vitasoy-blue-grad flex items-center justify-center text-white font-black text-lg shadow">
+                    V
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 data-i18n="appTitle" class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight">
+                            维他奶包装大挑战
+                        </h1>
+                        <span data-i18n="headerBadge" class="hidden sm:inline-block px-2 py-0.5 text-[11px] font-bold bg-sky-100 text-sky-800 rounded-md">
+                            分步重合面推导版
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-0.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-50 text-sky-900 font-bold border border-sky-200">
+                            👤 <span id="display-student-info" class="ml-1">未登录</span>
+                        </span>
+                        <button type="button" onclick="switchStudentPrompt()" data-i18n="btnSwitchStudent" class="text-sky-600 hover:underline font-semibold">
+                            [切换学生]
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-center min-w-[72px]">
+                    <div data-i18n="hudTimeLabel" class="text-[10px] font-bold text-slate-400">本关耗时</div>
+                    <div id="hud-level-time" class="text-sm font-extrabold text-blue-600 font-mono">00:00</div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-center min-w-[76px]">
+                    <div data-i18n="hudActionsLabel" class="text-[10px] font-bold text-slate-400">拖拽/旋转</div>
+                    <div class="text-sm font-extrabold text-amber-600"><span id="hud-actions">0</span> <span data-i18n="unitTimes" class="text-[11px] font-normal text-slate-500">次</span></div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-center min-w-[82px]">
+                    <div data-i18n="hudSavedLabel" class="text-[10px] font-bold text-slate-400">本关已记录</div>
+                    <div class="text-sm font-extrabold text-emerald-600"><span id="hud-level-saved">0</span> <span data-i18n="unitTypes" class="text-[11px] font-normal text-slate-500">种</span></div>
+                </div>
+                <button type="button" onclick="toggleLanguage()"
+                    class="px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 text-xs sm:text-sm font-extrabold flex items-center gap-1 shadow-sm transition">
+                    <span>🌐</span>
+                    <span class="lang-toggle-label">中 / EN</span>
+                </button>
+                <button id="btn-open-teacher-auth" type="button"
+                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow transition">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span data-i18n="btnTeacherDash">教师后台</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== 3. 七关阶梯探究导航条 ==================== -->
+    <div class="bg-sky-50/90 border-b border-sky-200/80">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-1.5" id="level-tabs"></div>
+            <div data-i18n="topTip" class="text-xs font-semibold text-sky-900 bg-white px-3 py-1 rounded-full border border-sky-200 shadow-sm">
+                💡 提示：多面重合时请分步勾选大/中/小面；开启<strong>【X光透视】</strong>看清内部切面！
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 4. 主工作区 ==================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <!-- 左半区 (7列)：关卡目标 + 自定义盒数器 + 3D自由拖拽实验台 + 姿势控制 -->
+        <div class="lg:col-span-7 flex flex-col gap-3.5">
+            <!-- 关卡任务说明卡 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span id="level-badge" class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-sky-600 text-white">关卡 1</span>
+                            <h2 id="level-title" class="text-base sm:text-lg font-extrabold text-slate-800"></h2>
+                        </div>
+                        <p id="level-desc" class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed"></p>
+                    </div>
+                    <div id="level-status-pill" class="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                        🔍 探究中
+                    </div>
+                </div>
+
+                <!-- 关卡 7 专属：学生自定义盒子数量与行数/列数控制器 -->
+                <div id="custom-box-builder" class="hidden mt-3 pt-3 border-t border-indigo-100 bg-indigo-50/70 p-3 rounded-xl space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span data-i18n="customBuilderTitle" class="text-xs font-extrabold text-indigo-950">
+                            🎛️ 自由实验参数台（选择或输入任意盒数，观察偶数盒与奇数盒的区别）：
+                        </span>
+                        <div class="flex flex-wrap items-center gap-1">
+                            <button type="button" onclick="applyCustomCountPreset(10)" class="px-2 py-0.5 rounded bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-[11px] font-extrabold">10</button>
+                            <button type="button" onclick="applyCustomCountPreset(12)" class="px-2 py-0.5 rounded bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-[11px] font-extrabold">12</button>
+                            <button type="button" onclick="applyCustomCountPreset(8)" class="px-2 py-0.5 rounded bg-white hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-[11px] font-extrabold">8</button>
+                            <button type="button" onclick="applyCustomCountPreset(9)" class="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold">9 (Odd)</button>
+                            <button type="button" onclick="applyCustomCountPreset(5)" class="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold">5 (Odd)</button>
+                            <button type="button" onclick="applyCustomCountPreset(7)" class="px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold">7 (Odd)</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label data-i18n="customInputLabel" class="text-xs font-bold text-slate-700">自定义总盒数 (2~24)：</label>
+                        <input type="number" id="input-custom-box-count" min="2" max="24" value="10"
+                            class="w-20 px-2.5 py-1 rounded-lg border border-indigo-300 bg-white text-center text-sm font-black text-indigo-900 outline-none focus:border-indigo-500">
+                        <button type="button" data-i18n="btnGenerateCustom" onclick="generateCustomLevelBoxes()"
+                            class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition">
+                            ✨ 生成 3D 盒子
+                        </button>
+                        <span id="custom-parity-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                            偶数盒：可拼成完整长方体
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 脚手架快捷造型参考栏 -->
+                <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                    <span data-i18n="scaffoldLabel" class="text-xs font-bold text-slate-500 flex items-center gap-1">
+                        🧩 快捷造型脚手架：
+                    </span>
+                    <div id="preset-buttons-container" class="flex flex-wrap items-center gap-1.5"></div>
+                </div>
+            </div>
+
+            <!-- 3D 自由拖拽实验台 -->
+            <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 relative">
+                <div id="canvas-container">
+                    <div class="absolute top-3 left-3 z-10 bg-white/92 backdrop-blur-sm px-3 py-2 rounded-xl border border-slate-200 shadow-sm text-xs space-y-1 pointer-events-none">
+                        <div class="font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
+                            <span data-i18n="canvasTitle">3D 空间拼接实验台</span>
+                        </div>
+                        <div data-i18n="canvasTip1" class="text-slate-600">• <strong>拖动盒子</strong>：平移并自动磁吸贴合</div>
+                        <div data-i18n="canvasTip2" class="text-slate-600">• <strong>拖动空白</strong>：旋转视角 / 滚轮缩放</div>
+                        <div class="flex items-center gap-1.5 pt-0.5">
+                            <span class="w-3.5 h-3.5 rounded-sm bg-orange-500/80 border border-emerald-400 inline-block"></span>
+                            <span data-i18n="canvasLegend" class="text-orange-800 font-bold">高亮网格面 = 隐藏的重合面</span>
+                        </div>
+                    </div>
+
+                    <div class="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+                        <button type="button" id="btn-toggle-xray" onclick="toggleXRayMode()"
+                            class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1">
+                            👁️ X光透视：关闭
+                        </button>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button type="button" data-i18n="camIso" onclick="setCameraPreset('iso')" class="px-2 py-1 bg-white/95 hover:bg-sky-50 text-slate-700 font-semibold text-[11px] rounded-lg border border-slate-200 shadow-sm">
+                                立体
+                            </button>
+                            <button type="button" data-i18n="camTop" onclick="setCameraPreset('top')" class="px-2 py-1 bg-white/95 hover:bg-sky-50 text-slate-700 font-semibold text-[11px] rounded-lg border border-slate-200 shadow-sm">
+                                俯视
+                            </button>
+                            <button type="button" data-i18n="camFront" onclick="setCameraPreset('front')" class="px-2 py-1 bg-white/95 hover:bg-sky-50 text-slate-700 font-semibold text-[11px] rounded-lg border border-slate-200 shadow-sm">
+                                正视
+                            </button>
+                        </div>
+                        <button type="button" data-i18n="btnReset" onclick="resetCurrentLevelBoxes()" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-lg border border-rose-200 shadow-sm transition">
+                            ↺ 一键Reset重置
+                        </button>
+                    </div>
+
+                    <div id="floating-snap-banner" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-10 bg-slate-900/90 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm whitespace-nowrap">
+                    </div>
+                </div>
+
+                <!-- 选中盒子旋转与多层堆叠控制 -->
+                <div class="mt-3 bg-slate-50 rounded-xl p-3 border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span data-i18n="selectedLabel" class="text-xs font-extrabold text-slate-600">当前选中：</span>
+                        <span id="selected-box-badge" class="px-2.5 py-1 rounded-lg bg-sky-600 text-white text-xs font-extrabold shadow-sm">
+                            1 号盒
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button type="button" data-i18n="btnRotY" onclick="rotateSelectedBox('Y')"
+                            class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-sky-50 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm transition">
+                            🔄 水平旋转 90°
+                        </button>
+                        <button type="button" data-i18n="btnRotX" onclick="rotateSelectedBox('X')"
+                            class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-sky-50 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm transition">
+                            🔃 前后翻倒 90°
+                        </button>
+                        <button type="button" data-i18n="btnRotZ" onclick="rotateSelectedBox('Z')"
+                            class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-sky-50 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm transition">
+                            🔁 左右侧躺 90°
+                        </button>
+                        <button type="button" id="btn-stack-toggle" onclick="toggleStackSelectedBox()"
+                            class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition">
+                            ⬆️ 向上叠一层
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右半区 (5列)：三步分步重合面推导区 + 已发现方案对比卡片栏 -->
+        <div class="lg:col-span-5 flex flex-col gap-3.5">
+            
+            <!-- 自主探究三步分步推导卡片 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
+                    <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <span class="w-2 h-5 bg-sky-600 rounded-full inline-block"></span>
+                        <span data-i18n="derivationTitle">自主探究三步分步推导区</span>
+                    </h3>
+                    <span id="connectivity-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        状态检测中
+                    </span>
+                </div>
+
+                <!-- 提示性空间观测信息 -->
+                <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
+                        <div data-i18n="statSpecLabel" class="text-[11px] text-slate-500 font-semibold">盒子数量与单盒面积</div>
+                        <div id="info-single-spec" class="text-xs sm:text-sm font-extrabold text-slate-800 mt-0.5">2个 × 150cm²</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
+                        <div data-i18n="statRawLabel" class="text-[11px] text-slate-500 font-semibold">分开包装总面积和</div>
+                        <div id="info-raw-total" class="text-xs sm:text-sm font-extrabold text-slate-800 mt-0.5">300 cm²</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-xl p-2 border border-orange-200">
+                        <div data-i18n="statJointsLabel" class="text-[11px] text-orange-800 font-semibold">当前内部贴合处数</div>
+                        <div id="info-contact-spots" class="text-xs sm:text-sm font-black text-orange-600 mt-0.5">0 处贴合</div>
+                    </div>
+                </div>
+
+                <!-- 三步递进推导区 -->
+                <div class="space-y-3 bg-sky-50/70 p-3.5 rounded-xl border border-sky-200/90">
+                    
+                    <!-- 第 1 步：选择重叠面（支持单选或多选大/中/小面） -->
+                    <div class="bg-white p-2.5 rounded-xl border border-sky-200/80 space-y-1.5">
+                        <div data-i18n="step1Title" class="text-xs font-extrabold text-sky-900">
+                            第 1 步：观察3D切面，勾选包含哪几种重叠面？（有几种就勾几种）
+                        </div>
+                        <div id="face-type-checkboxes" class="flex flex-wrap gap-2 pt-0.5">
+                        </div>
+                    </div>
+
+                    <!-- 第 2 步：分别计算每一种重叠面减少的个数与面积 -->
+                    <div class="bg-white p-2.5 rounded-xl border border-sky-200/80 space-y-2">
+                        <div data-i18n="step2Title" class="text-xs font-extrabold text-sky-900">
+                            第 2 步：分别计算每种重叠面减少了几个面、多少面积？
+                        </div>
+                        <div id="per-face-breakdown-container" class="space-y-2">
+                            <div data-i18n="step2EmptyHint" class="text-[11px] text-slate-400 italic py-1">
+                                ↑ 请先在第 1 步勾选隐藏的重叠面类型，此处将自动生成对应的计算行
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第 3 步：汇总减少总面积 & 计算最终用纸总面积 -->
+                    <div class="bg-white p-2.5 rounded-xl border border-sky-200/80 space-y-2">
+                        <div data-i18n="step3Title" class="text-xs font-extrabold text-sky-900">
+                            第 3 步：汇总减少总面积，并计算最终所需包装纸总面积
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                                <label data-i18n="qReducedTotal" class="block text-[11px] font-bold text-slate-600 mb-1">
+                                    所有重叠面减少的总面积：
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="ans-reduced-area" data-i18n-placeholder="phArea" placeholder="各类面积相加"
+                                        class="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 text-sm font-extrabold text-slate-800 focus:border-sky-500 outline-none">
+                                    <span class="absolute right-2.5 top-2 text-xs text-slate-400 font-bold">cm²</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-amber-800 mb-1">
+                                    <span data-i18n="qFinalTotal">最终用纸面积：</span> (<span id="formula-prefix-text">300 - 减少</span>)
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="ans-final-area" data-i18n-placeholder="phFinalArea" placeholder="填最终用纸面积"
+                                        class="w-full px-3 py-1.5 rounded-lg border-2 border-amber-400 bg-amber-50/40 text-sm font-black text-amber-900 focus:border-amber-500 outline-none">
+                                    <span class="absolute right-2.5 top-2 text-xs text-amber-700 font-bold">cm²</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-verify-deduction" onclick="verifyStudentDeduction()"
+                        class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-1.5">
+                        <span data-i18n="btnVerify">✅ 核对三步计算并记录本方案</span>
+                    </button>
+                </div>
+
+                <!-- 启发式纠错与鼓励反馈框 -->
+                <div id="feedback-box" class="hidden mt-3 p-3 rounded-xl text-xs leading-relaxed border"></div>
+
+                <!-- 质性规律总结与奇数盒思辨输入框 -->
+                <div id="qualitative-reflection-box" class="hidden mt-3 pt-3 border-t border-slate-200 space-y-2.5">
+                    <div>
+                        <label id="qualitative-prompt-label" data-i18n="qualPrompt" class="block text-xs font-extrabold text-indigo-900 mb-1">
+                            ✏️ 数学规律解释（请用自己的话总结：为什么这种摆法最省纸？关键词：重叠面、面积大小、减少个数）：
+                        </label>
+                        <textarea id="input-qualitative-reason" rows="2" data-i18n-placeholder="qualPlaceholder" placeholder="请在这里写下你的发现..."
+                            class="w-full px-3 py-2 rounded-xl border border-indigo-200 focus:border-indigo-500 text-xs text-slate-800 outline-none"></textarea>
+                    </div>
+
+                    <!-- 为什么没有讨论奇数个盒子思辨题 -->
+                    <div id="odd-box-inquiry-section" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-1.5">
+                        <div data-i18n="oddBoxTitle" class="text-xs font-extrabold text-amber-950 flex items-center gap-1">
+                            🤔 深度思辨拓展（为什么我们没讨论奇数个盒子？）：
+                        </div>
+                        <p data-i18n="oddBoxQuestion" class="text-[11px] text-amber-900 leading-relaxed">
+                            观察一下：前面关卡研究的都是 <strong>2、4、6、24 这样的偶数个盒子</strong>，为什么我们一直没有讨论 <strong>3 盒、5 盒或 7 盒</strong>等奇数个盒子的最省纸长方体包装？如果超市非要把 5 盒维他奶包在一起，会遇到什么麻烦？
+                        </p>
+                        <textarea id="input-odd-box-answer" rows="2" data-i18n-placeholder="oddBoxPlaceholder" placeholder="思考提示：5 个盒子能拼成一个整齐的大长方体吗？会有凸出或空缺吗？"
+                            class="w-full px-3 py-2 rounded-xl border border-amber-300 bg-white focus:border-amber-500 text-xs text-slate-800 outline-none"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span id="qualitative-saved-tip" data-i18n="qualSaved" class="text-[11px] text-emerald-600 font-bold hidden">✅ 你的规律总结与思辨回答已保存到学习档案！</span>
+                        <button type="button" data-i18n="btnSaveQual" onclick="saveQualitativeReflection()"
+                            class="ml-auto px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+                            提交探究总结
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已发现方案对比卡片栏 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <span class="w-2 h-5 bg-amber-500 rounded-full inline-block"></span>
+                        <span data-i18n="cardsPanelTitle">本关已验证方案对比卡片栏</span>
+                    </h3>
+                    <span id="level-goal-progress" class="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+                        目标：0 / 2 种
+                    </span>
+                </div>
+                <div id="discovered-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-y-auto max-h-56 pr-1">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== 5. 教师后台密码验证弹窗 ==================== -->
+    <div id="teacher-pwd-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
+            <div class="bg-slate-800 text-white px-5 py-4 flex items-center justify-between">
+                <h3 data-i18n="pwdModalTitle" class="text-base font-extrabold flex items-center gap-2">
+                    🔒 教师数据分析后台验证
+                </h3>
+                <button type="button" onclick="closeTeacherPwdModal()" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="p-5 space-y-3.5">
+                <p data-i18n="pwdModalDesc" class="text-xs text-slate-600 leading-relaxed">
+                    为防止学生误触查看或修改全班实验数据，请输入教师访问密码进入后台看板。
+                </p>
+                <div>
+                    <input type="password" id="input-teacher-pwd" data-i18n-placeholder="pwdPlaceholder" placeholder="请输入教师密码（测试密码：6001）"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-slate-700 outline-none text-sm font-bold">
+                    <div data-i18n="pwdHint" class="text-[11px] text-amber-700 font-semibold mt-1">
+                        💡 课堂演示默认测试密码：<code class="bg-amber-100 px-1.5 py-0.5 rounded">6001</code>
+                    </div>
+                </div>
+                <div id="teacher-pwd-error" data-i18n="pwdError" class="hidden text-xs text-red-600 font-bold">
+                    密码错误，请重新输入（默认密码为 6001）。
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" data-i18n="btnCancel" onclick="closeTeacherPwdModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600">
+                        取消
+                    </button>
+                    <button type="button" data-i18n="btnUnlock" onclick="verifyTeacherPassword()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold">
+                        解锁进入后台
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 6. 教师后台数据分析看板弹窗 ==================== -->
+    <div id="teacher-dashboard-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-300">
+            <div class="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Teacher Research & Analytics Dashboard</span>
+                    <h2 data-i18n="dashTitle" class="text-lg sm:text-xl font-black">数学探究式学习：全班投入度、准确率与能动性分析后台</h2>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="toggleLanguage()"
+                        class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-extrabold border border-slate-500 transition">
+                        🌐 <span class="lang-toggle-label">中 / EN</span>
+                    </button>
+                    <button type="button" data-i18n="btnSeedDemoClass" onclick="seedDemoClassData()"
+                        class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow transition">
+                        ➕ 生成模拟全班样本
+                    </button>
+                    <button type="button" data-i18n="btnExportCSV" onclick="exportAllStudentsCSV()"
+                        class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold shadow transition flex items-center gap-1.5">
+                        📥 导出全班 CSV 数据表 (Excel/SPSS)
+                    </button>
+                    <button type="button" data-i18n="btnCloseDash" onclick="closeTeacherDashboard()"
+                        class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition">
+                        关闭后台
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                    <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+                        <div data-i18n="kpiStudentsLabel" class="text-xs font-bold text-sky-800">参与实验学生人数</div>
+                        <div id="dash-student-count" class="text-2xl font-black text-sky-900 mt-1">0 人</div>
+                        <div data-i18n="kpiStudentsSub" class="text-[11px] text-sky-600 mt-0.5">本地数据库实时汇总</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                        <div data-i18n="kpiTimeLabel" class="text-xs font-bold text-blue-800">平均探究投入时长</div>
+                        <div id="dash-avg-time" class="text-2xl font-black text-blue-900 font-mono mt-1">0 秒</div>
+                        <div data-i18n="kpiTimeSub" class="text-[11px] text-blue-600 mt-0.5">反映课堂时间投入度</div>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <div data-i18n="kpiActionsLabel" class="text-xs font-bold text-amber-800">平均空间操作次数</div>
+                        <div id="dash-avg-actions" class="text-2xl font-black text-amber-900 mt-1">0 次</div>
+                        <div data-i18n="kpiActionsSub" class="text-[11px] text-amber-700 mt-0.5">拖拽平移 + 旋转 + 叠放</div>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+                        <div data-i18n="kpiAccLabel" class="text-xs font-bold text-emerald-800">平均首次填空准确率</div>
+                        <div id="dash-avg-accuracy" class="text-2xl font-black text-emerald-900 mt-1">0%</div>
+                        <div data-i18n="kpiAccSub" class="text-[11px] text-emerald-700 mt-0.5">一次核对即通过的比例</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                        <h3 data-i18n="tableTitle" class="text-sm font-extrabold text-slate-800">📊 学生个体探究投入度与公式推导准确率明细表</h3>
+                        <span data-i18n="tableHint" class="text-xs text-slate-500">点击任意学生行可查看其详细操作轨迹与质性总结</span>
+                    </div>
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-sm">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                    <th data-i18n="thId" class="py-3 px-3 font-extrabold">学号</th>
+                                    <th data-i18n="thName" class="py-3 px-3 font-extrabold">姓名</th>
+                                    <th data-i18n="thTime" class="py-3 px-3 font-extrabold">总耗时</th>
+                                    <th data-i18n="thActions" class="py-3 px-3 font-extrabold">拖拽/旋转次数</th>
+                                    <th data-i18n="thHints" class="py-3 px-3 font-extrabold">脚手架提示次数</th>
+                                    <th data-i18n="thSubmits" class="py-3 px-3 font-extrabold">提交次数(一次对/总)</th>
+                                    <th data-i18n="thAcc" class="py-3 px-3 font-extrabold">首次准确率</th>
+                                    <th data-i18n="thProg" class="py-3 px-3 font-extrabold">关卡达标进度</th>
+                                    <th data-i18n="thOp" class="py-3 px-3 font-extrabold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-students-tbody" class="divide-y divide-slate-200 bg-white"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                        <h4 class="text-xs font-extrabold text-slate-800 mb-2 flex items-center justify-between">
+                            <span data-i18n="qualCorpusTitle">📝 学生质性规律总结与奇数盒思辨原文</span>
+                            <span id="detail-student-tag" class="text-sky-700 font-bold">当前学生</span>
+                        </h4>
+                        <div id="detail-qualitative-text" class="space-y-2 text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200 min-h-[135px]">
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 text-slate-200 rounded-2xl p-4">
+                        <h4 data-i18n="logsPanelTitle" class="text-xs font-extrabold text-amber-400 mb-2">
+                            🕒 实时空间探索与试错纠错行为日志（近期 30 条）
+                        </h4>
+                        <div id="detail-action-logs" class="font-mono text-[11px] space-y-1 max-h-[145px] overflow-y-auto text-slate-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 7. 核心 JavaScript 逻辑引擎 ==================== -->
+    <script>
+        const STORAGE_KEY = "vitasoy_ibl_research_records_v4";
+
+        // 各类面的标准元数据
+        const FACE_CATALOG = {
+            cube_25: { area: 25, zh: "正方体面 (25cm²)", en: "Cube Face (25cm²)" },
+            vita_50: { area: 50, zh: "大面 5×10 (50cm²)", en: "Large Face 5×10 (50cm²)" },
+            vita_40: { area: 40, zh: "中面 4×10 (40cm²)", en: "Medium Face 4×10 (40cm²)" },
+            vita_20: { area: 20, zh: "小面 5×4 (20cm²)", en: "Small Face 5×4 (20cm²)" }
+        };
+
+        // ==================== 中英文双语词典 (I18N) ====================
+        const I18N = {
+            zh: {
+                docTitle: "维他奶包装大挑战 / Vitasoy Packaging Challenge",
+                langBtn: "中 / EN",
+                loginBadge: "3D 空间探究 · 分步公式推导版",
+                appTitle: "维他奶包装大挑战",
+                loginSubtitle: "从正方体到 24 盒整箱与自定义装箱，探索最省纸的奥秘",
+                specTitle: "📐 本课实验规格说明：",
+                specCube: "• <strong>正方体礼盒</strong>：棱长 5cm（单面 25cm²，单盒总面积 150cm²）",
+                specVitasoy: "• <strong>蓝盒维他奶</strong>：长 5cm × 宽 4cm × 高 10cm（大面 50cm²、中面 40cm²、小面 20cm²，单盒总面积 220cm²）",
+                labelName: "学生姓名",
+                placeholderName: "请输入你的真实姓名（如：陈思源）",
+                labelId: "学生学号",
+                placeholderId: "请输入学号（如：20260801）",
+                loginError: "请完整填写学生姓名和学号后再开始实验！",
+                btnFillDemo: "填入示例学生",
+                btnStartGame: "进入 3D 探究实验室 →",
+                headerBadge: "分步重合面推导版",
+                notLoggedIn: "未登录",
+                btnSwitchStudent: "[切换学生]",
+                hudTimeLabel: "本关耗时",
+                hudActionsLabel: "拖拽/旋转",
+                unitTimes: "次",
+                hudSavedLabel: "本关已记录",
+                unitTypes: "种",
+                btnTeacherDash: "教师后台",
+                topTip: "💡 提示：多面重合时请分步勾选大/中/小面；开启<strong>【X光透视】</strong>看清内部切面！",
+                customBuilderTitle: "🎛️ 自由实验参数台（选择或输入任意盒数，观察偶数盒与奇数盒的区别）：",
+                customInputLabel: "自定义总盒数 (2~24)：",
+                btnGenerateCustom: "✨ 生成 3D 盒子",
+                parityEven: (n) => `偶数盒 (${n} 盒)：可拼成整齐无缺口的长方体`,
+                parityOddComposite: (n) => `奇合数盒 (${n} 盒)：虽可排成 3×${n/3} 矩形阵列，但日常超市极少使用`,
+                parityOddPrime: (n) => `奇数盒 (${n} 盒)：无法拼成多排整齐长方体（只能排成 1×${n} 长条或出现凸起缺口！）`,
+                scaffoldLabel: "🧩 快捷造型脚手架：",
+                canvasTitle: "3D 空间拼接实验台",
+                canvasTip1: "• <strong>拖动盒子</strong>：平移并自动磁吸贴合",
+                canvasTip2: "• <strong>拖动空白</strong>：旋转视角 / 滚轮缩放",
+                canvasLegend: "高亮网格面 = 隐藏的重合面",
+                xrayOff: "👁️ X光透视：关闭",
+                xrayOn: "👁️ X光透视：已开启",
+                camIso: "立体",
+                camTop: "俯视",
+                camFront: "正视",
+                btnReset: "↺ 一键Reset重置",
+                selectedLabel: "当前选中：",
+                boxUnit: (id, sx, sz, sy, layer) => `${id} 号盒 (${sx}×${sz}×${sy}cm · 第${layer}层)`,
+                btnRotY: "🔄 水平旋转 90°",
+                btnRotX: "🔃 前后翻倒 90°",
+                btnRotZ: "🔁 左右侧躺 90°",
+                btnStackLayer: (nextLayer) => nextLayer === 1 ? "⬇️ 落回第1层桌面" : `⬆️ 叠放到第 ${nextLayer} 层`,
+                derivationTitle: "自主探究三步分步推导区",
+                statSpecLabel: "盒子数量与单盒面积",
+                statRawLabel: "分开包装总面积和",
+                statJointsLabel: "当前内部贴合处数",
+                specFormat: (cnt, area) => `${cnt}个 × ${area}cm²`,
+                spotsFormat: (cnt) => `${cnt} 处贴合`,
+                connReady: (dims) => `✅ 已连成整体 (${dims})`,
+                connDisconnected: "⚠️ 尚有盒子未拼在一起",
+                step1Title: "第 1 步：观察3D切面，勾选包含哪几种重叠面？（有几种就勾几种）",
+                step2Title: "第 2 步：分别计算每种重叠面减少了几个面、多少面积？",
+                step2EmptyHint: "↑ 请先在第 1 步勾选隐藏的重叠面类型，此处将自动生成对应的计算行",
+                step2RowLabel: (name) => `${name}：减少`,
+                step2RowMid: (area) => `个面 × ${area}cm² =`,
+                phInt: "个数",
+                phArea: "面积",
+                step3Title: "第 3 步：汇总减少总面积，并计算最终所需包装纸总面积",
+                qReducedTotal: "所有重叠面减少的总面积：",
+                qFinalTotal: "最终用纸面积：",
+                formulaPrefix: (raw) => `${raw} - 减少总面积`,
+                phFinalArea: "填最终用纸面积",
+                btnVerify: "✅ 核对三步计算并记录本方案",
+                qualPrompt: "✏️ 数学规律总结（为什么这种摆法最省纸？关键词：重叠面、面积大小、减少个数）：",
+                qualPlaceholder: "请在这里写下你的发现...",
+                oddBoxTitle: "🤔 深度思辨拓展（如果是 3、5、7、9 等奇数个盒子，会出现什么情况？）：",
+                oddBoxQuestion: "试一试在上方自由实验台输入 <strong>5 盒、7 盒或 9 盒</strong>！思考：如果把 <strong>奇数个盒子</strong> 包在一起，会出现什么情况？（提示：1. 像 5、7 这样的质数个盒子，能拼成整齐的长方体吗？如果强行包成一捆，多出来的那一盒会造成什么问题？ 2. 像 9 盒这样能拼成 3×3 的，为什么现实中也远不如 6 盒、8 盒、12 盒、24 盒常见？）",
+                oddBoxPlaceholder: "请写下你对奇数个盒子包装情况的观察与思考...",
+                qualSaved: "✅ 你的规律总结与奇数盒思辨已保存到学习档案！",
+                btnSaveQual: "提交探究总结",
+                cardsPanelTitle: "本关已验证方案对比卡片栏",
+                cardsEmpty: "在左侧拼接造型并完成上方三步分步推导核对后，你的方案卡片将展示在这里！",
+                goalProgress: (cur, req, hasOpt) => `已验证：${cur} / ${req} 种${hasOpt ? ' (含最优解👑)' : ''}`,
+                statusPassed: "✅ 本关已达标通关",
+                statusExploring: "🔍 探究与推导中",
+                levelBadge: (id) => `关卡 ${id}`,
+                presetPrefix: (name) => `演示：${name}`,
+                cardTitle: (idx, dims) => `方案 #${idx} (${dims})`,
+                cardOptimal: "👑 最省纸",
+                cardSaved: (area) => `共省 ${area} cm²`,
+                cardFinal: (area) => `用纸 ${area} cm²`,
+                cubeRotTip: "💡 正方体六个面完全相同（都是 5×5=25cm²），旋转后每个面面积不变哦！",
+                snapBanner: (cnt) => `✨ 检测到 ${cnt} 处面贴合！请在右侧分三步推导出减少的面积`,
+                errDisconnected: (cnt) => `<strong>⚠️ 尚未完成拼接：</strong>请先把全部 <strong>${cnt} 个盒子</strong>拖动到一起拼成一个整体，然后再进行三步计算核对哦！`,
+                errStep1Empty: `<strong>📝 第 1 步未选择：</strong>请先观察 3D 橙色切面，勾选出本次摆法中包含的重叠面类型！`,
+                errStep1Mismatch: (actualList) => `• <strong>第 1 步（重叠面类型勾选）有误</strong>：当前 3D 切面实际包含的重叠面是【<strong>${actualList}</strong>】，请开启【X光透视】仔细看看贴合面的尺寸！`,
+                errStep2Incomplete: (name) => `• <strong>第 2 步（${name}）未填完整</strong>：请填写该面减少的【面数】和对应的【面积】！`,
+                errStep2FacesJoint: (name, spots, faces) => `• <strong>第 2 步（${name} 减少面数）常见易错点</strong>：${spots} 处贴合会同时藏住左右/上下<strong>各 1 个面</strong>，所以是 <strong>${spots} × 2 = ${faces} 个面</strong>！`,
+                errStep2FacesWrong: (name, faces) => `• <strong>第 2 步（${name} 减少面数）有误</strong>：请再数一遍该尺寸的贴合处数，每处贴合减少 2 个面（应为 ${faces} 个面）！`,
+                errStep2AreaWrong: (name, faces, unitArea, subArea) => `• <strong>第 2 步（${name} 减少面积）算错了</strong>：${faces} 个面 × ${unitArea}cm² = ${subArea}cm²，请重新算一算！`,
+                errStep3Incomplete: `• <strong>第 3 步未填完整</strong>：请填写【减少的总面积】和【最终用纸面积】！`,
+                errStep3ReducedWrong: `• <strong>第 3 步（减少的总面积）算错了</strong>：把第 2 步中各类重叠面减少的面积相加，就是减少的总面积！`,
+                errStep3FinalWrong: (raw) => `• <strong>第 3 步（最终用纸面积）算错了</strong>：用【分开包装总面积和 ${raw} cm²】减去【减少的总面积】！`,
+                errHeader: `<div class="font-extrabold text-rose-800">🤔 还差一点点，请根据分步提示修正：</div>`,
+                successHeader: (raw, red, fin) => `<div class="font-extrabold text-sm text-emerald-800">🎉 三步推导完全正确！算式：${raw} - ${red} = ${fin} cm²</div>`,
+                successNextBtn: "🎉 本关已达标！进入下一关 →",
+                successAllDone: "🏆 恭喜你完成全部 7 个关卡（含自由自定义盒数实验室）！请确保已在下方写下规律总结与奇数盒情况分析。",
+                successNeedOptimal: (opt) => `💡 本方案已记录！但当前盒数还有更省纸的立体摆法（目标最小面积 ${opt} cm²），请尝试多排多层紧凑拼法！`,
+                successNeedMore: (rem) => `👏 你已经找到了最省纸方案！请再探索 ${rem} 种其他摆法进行对比验证即可通关。`,
+                pwdModalTitle: "🔒 教师数据分析后台验证",
+                pwdModalDesc: "为防止学生误触查看或修改全班实验数据，请输入教师访问密码进入后台看板。",
+                pwdPlaceholder: "请输入教师密码（测试密码：6001）",
+                pwdHint: "💡 课堂演示默认测试密码：<code class='bg-amber-100 px-1.5 py-0.5 rounded'>6001</code>",
+                pwdError: "密码错误，请重新输入（默认密码为 6001）。",
+                btnCancel: "取消",
+                btnUnlock: "解锁进入后台",
+                dashTitle: "数学探究式学习：全班投入度、准确率与能动性分析后台",
+                btnSeedDemoClass: "➕ 生成模拟全班样本",
+                btnExportCSV: "📥 导出全班 CSV 数据表 (Excel/SPSS)",
+                btnCloseDash: "关闭后台",
+                kpiStudentsLabel: "参与实验学生人数",
+                kpiStudentsSub: "本地数据库实时汇总",
+                kpiTimeLabel: "平均探究投入时长",
+                kpiTimeSub: "反映课堂时间投入度",
+                kpiActionsLabel: "平均空间操作次数",
+                kpiActionsSub: "拖拽平移 + 旋转 + 叠放",
+                kpiAccLabel: "平均首次填空准确率",
+                kpiAccSub: "一次核对即通过的比例",
+                tableTitle: "📊 学生个体探究投入度与公式推导准确率明细表",
+                tableHint: "点击任意学生行可查看其详细操作轨迹与质性总结",
+                thId: "学号",
+                thName: "姓名",
+                thTime: "总耗时",
+                thActions: "拖拽/旋转次数",
+                thHints: "脚手架提示次数",
+                thSubmits: "提交次数(一次对/总)",
+                thAcc: "首次准确率",
+                thProg: "关卡达标进度",
+                thOp: "操作",
+                btnInspect: "查看详情",
+                qualCorpusTitle: "📝 学生质性规律总结与奇数盒情况分析原文",
+                logsPanelTitle: "🕒 实时空间探索与试错纠错行为日志（近期 30 条）",
+                qualNotFilled: "（未填写）",
+                qualL4Label: "【关卡 4（4盒维他奶）规律】：",
+                qualL5Label: "【关卡 5（6盒半打装）规律】：",
+                qualL6Label: "【关卡 6（24盒整箱）规律】：",
+                qualL7Label: "【关卡 7（自由自定义盒数）发现】：",
+                qualOddLabel: "【思辨拓展（如果是奇数个盒子会怎样）】：",
+                noLogs: "暂无操作记录",
+                unitPeople: (n) => `${n} 人`,
+                unitSec: (n) => `${n} 秒`,
+                unitTimesVal: (n) => `${n} 次`,
+                unitLevelsVal: (c) => `${c} / 7 关`
+            },
+            en: {
+                docTitle: "Vitasoy Packaging Challenge",
+                langBtn: "EN / 中文",
+                loginBadge: "3D Spatial Inquiry · Step-by-Step Derivation",
+                appTitle: "Vitasoy Packaging Challenge",
+                loginSubtitle: "From cubes to 24-carton cases & custom counts: discover optimal packaging",
+                specTitle: "📐 Experiment Dimensions:",
+                specCube: "• <strong>Gift Cube</strong>: Edge 5cm (1 face = 25cm², single cube = 150cm²)",
+                specVitasoy: "• <strong>Vitasoy Carton</strong>: 5cm × 4cm × 10cm (Large 50cm², Medium 40cm², Small 20cm², single carton = 220cm²)",
+                labelName: "Student Name",
+                placeholderName: "Enter your full name (e.g., Alex Chen)",
+                labelId: "Student ID",
+                placeholderId: "Enter student ID (e.g., 20260801)",
+                loginError: "Please enter both Student Name and Student ID to begin!",
+                btnFillDemo: "Fill Demo Student",
+                btnStartGame: "Enter 3D Inquiry Lab →",
+                headerBadge: "Step-by-Step Overlap Derivation",
+                notLoggedIn: "Not Logged In",
+                btnSwitchStudent: "[Switch Student]",
+                hudTimeLabel: "Level Time",
+                hudActionsLabel: "Drag/Rotate",
+                unitTimes: "ops",
+                hudSavedLabel: "Verified",
+                unitTypes: "plans",
+                btnTeacherDash: "Teacher Dashboard",
+                topTip: "💡 Tip: Check all overlapping face types (Large/Medium/Small) in Step 1; use <strong>[X-Ray Mode]</strong> to inspect inside!",
+                customBuilderTitle: "🎛️ Custom Box Sandbox (Choose or enter any box count to compare even vs. odd cartons):",
+                customInputLabel: "Custom Box Count (2–24):",
+                btnGenerateCustom: "✨ Build 3D Boxes",
+                parityEven: (n) => `Even Count (${n} boxes): Forms a neat, gap-free rectangular prism`,
+                parityOddComposite: (n) => `Odd Composite (${n} boxes): Can form a 3×${n/3} grid, though rare in retail`,
+                parityOddPrime: (n) => `Odd Prime (${n} boxes): Cannot form a multi-row rectangular prism without gaps or protrusions!`,
+                scaffoldLabel: "🧩 Layout Scaffolds:",
+                canvasTitle: "3D Spatial Assembly Workbench",
+                canvasTip1: "• <strong>Drag Box</strong>: Move & magnetic snap",
+                canvasTip2: "• <strong>Drag Empty Space</strong>: Orbit / Scroll to zoom",
+                canvasLegend: "Glowing Grid = Hidden Overlapping Face",
+                xrayOff: "👁️ X-Ray Mode: OFF",
+                xrayOn: "👁️ X-Ray Mode: ON",
+                camIso: "3D Iso",
+                camTop: "Top",
+                camFront: "Front",
+                btnReset: "↺ Reset Boxes",
+                selectedLabel: "Selected:",
+                boxUnit: (id, sx, sz, sy, layer) => `Box #${id} (${sx}×${sz}×${sy}cm · Layer ${layer})`,
+                btnRotY: "🔄 Rotate H 90°",
+                btnRotX: "🔃 Flip F/B 90°",
+                btnRotZ: "🔁 Tilt L/R 90°",
+                btnStackLayer: (nextLayer) => nextLayer === 1 ? "⬇️ Drop to Layer 1" : `⬆️ Stack to Layer ${nextLayer}`,
+                derivationTitle: "3-Step Self-Derivation Panel",
+                statSpecLabel: "Count & Unit Area",
+                statRawLabel: "Separate Total Area",
+                statJointsLabel: "Touching Joints",
+                specFormat: (cnt, area) => `${cnt} × ${area}cm²`,
+                spotsFormat: (cnt) => `${cnt} joint(s)`,
+                connReady: (dims) => `✅ Connected (${dims})`,
+                connDisconnected: "⚠️ Boxes not fully connected",
+                step1Title: "Step 1: Check ALL types of overlapping faces present in your 3D layout:",
+                step2Title: "Step 2: Calculate hidden faces and reduced area for EACH selected face type:",
+                step2EmptyHint: "↑ Select overlapping face type(s) in Step 1 to generate calculation rows here",
+                step2RowLabel: (name) => `${name}:`,
+                step2RowMid: (area) => `faces × ${area}cm² =`,
+                phInt: "Count",
+                phArea: "Area",
+                step3Title: "Step 3: Sum total reduced area & calculate final wrapping area",
+                qReducedTotal: "Total Reduced Area:",
+                qFinalTotal: "Final Wrapping Area:",
+                formulaPrefix: (raw) => `${raw} - Reduced`,
+                phFinalArea: "Final area",
+                btnVerify: "✅ Verify 3-Step Derivation & Record",
+                qualPrompt: "✏️ Mathematical Rule Summary (Why does this layout save the most paper? Keywords: overlapping faces, larger face area, more faces hidden):",
+                qualPlaceholder: "Write your discovery here...",
+                oddBoxTitle: "🤔 Critical Thinking Question (What happens if there is an ODD number of cartons, like 3, 5, 7, or 9?):",
+                oddBoxQuestion: "Try entering <strong>5, 7, or 9 cartons</strong> in the Custom Box Sandbox above! What happens when you try to wrap an <strong>odd number of cartons</strong>? (Hints: 1. Can prime odd counts like 5 or 7 form a neat rectangular prism without gaps or a sticking-out carton? 2. Even for 9 = 3×3, why are 6, 8, 12, or 24 packs much better for retail & shipping?)",
+                oddBoxPlaceholder: "Write your analysis of what happens with an odd number of cartons...",
+                qualSaved: "✅ Your reflection and odd-number analysis have been saved!",
+                btnSaveQual: "Submit Reflection",
+                cardsPanelTitle: "Verified Packaging Plans Comparison",
+                cardsEmpty: "Assemble the boxes on the left and complete the 3-step derivation above to record your plans here!",
+                goalProgress: (cur, req, hasOpt) => `Verified: ${cur} / ${req}${hasOpt ? ' (Optimal 👑)' : ''}`,
+                statusPassed: "✅ Level Completed",
+                statusExploring: "🔍 Exploring",
+                levelBadge: (id) => `Level ${id}`,
+                presetPrefix: (name) => `Preset: ${name}`,
+                cardTitle: (idx, dims) => `Plan #${idx} (${dims})`,
+                cardOptimal: "👑 Optimal",
+                cardSaved: (area) => `Saved ${area} cm²`,
+                cardFinal: (area) => `Paper ${area} cm²`,
+                cubeRotTip: "💡 All 6 faces of a cube are identical (5×5=25cm²), so rotating doesn't change face area!",
+                snapBanner: (cnt) => `✨ ${cnt} touching interface(s) detected! Complete the 3 steps on the right.`,
+                errDisconnected: (cnt) => `<strong>⚠️ Incomplete Assembly:</strong> Please drag all <strong>${cnt} boxes</strong> together into one connected pack first!`,
+                errStep1Empty: `<strong>📝 Step 1 Empty:</strong> Please check at least one overlapping face type from the 3D orange interfaces!`,
+                errStep1Mismatch: (actualList) => `• <strong>Step 1 (Face Type Selection) mismatch</strong>: The actual overlapping faces in your 3D model are [<strong>${actualList}</strong>]. Toggle [X-Ray Mode] to inspect!`,
+                errStep2Incomplete: (name) => `• <strong>Step 2 (${name}) incomplete</strong>: Enter both the hidden face count and its area!`,
+                errStep2FacesJoint: (name, spots, faces) => `• <strong>Step 2 (${name} face count) common mistake</strong>: ${spots} touching joint(s) hide <strong>2 faces per joint</strong>, so <strong>${spots} × 2 = ${faces} faces</strong>!`,
+                errStep2FacesWrong: (name, faces) => `• <strong>Step 2 (${name} face count) incorrect</strong>: Recount the touching joints for this face size (each joint hides 2 faces = ${faces} faces).`,
+                errStep2AreaWrong: (name, faces, unitArea, subArea) => `• <strong>Step 2 (${name} area) incorrect</strong>: ${faces} faces × ${unitArea}cm² = ${subArea}cm². Try again!`,
+                errStep3Incomplete: `• <strong>Step 3 incomplete</strong>: Enter both [Total Reduced Area] and [Final Wrapping Area]!`,
+                errStep3ReducedWrong: `• <strong>Step 3 (Total Reduced Area) incorrect</strong>: Sum up the reduced areas from Step 2!`,
+                errStep3FinalWrong: (raw) => `• <strong>Step 3 (Final Area) incorrect</strong>: Subtract [Total Reduced Area] from [Separate Total Area ${raw} cm²]!`,
+                errHeader: `<div class="font-extrabold text-rose-800">🤔 Almost there! Check the step-by-step hints below:</div>`,
+                successHeader: (raw, red, fin) => `<div class="font-extrabold text-sm text-emerald-800">🎉 All 3 steps are spot on! ${raw} - ${red} = ${fin} cm²</div>`,
+                successNextBtn: "🎉 Level Goal Reached! Next Level →",
+                successAllDone: "🏆 Congratulations! You conquered all 7 levels including the Custom Box Sandbox! Don't forget to submit your odd-number analysis below.",
+                successNeedOptimal: (opt) => `💡 Plan recorded! However, there is an even more compact 3D layout for this count (target minimum: ${opt} cm²). Try multi-row / multi-layer packing!`,
+                successNeedMore: (rem) => `👏 You found the optimal layout! Explore ${rem} more distinct arrangement(s) to compare and complete this level.`,
+                pwdModalTitle: "🔒 Teacher Analytics Authentication",
+                pwdModalDesc: "Please enter the teacher password to access class-wide telemetry and research data.",
+                pwdPlaceholder: "Enter password (Demo password: 6001)",
+                pwdHint: "💡 Classroom demo password: <code class='bg-amber-100 px-1.5 py-0.5 rounded'>6001</code>",
+                pwdError: "Incorrect password. Please try again (default: 6001).",
+                btnCancel: "Cancel",
+                btnUnlock: "Unlock Dashboard",
+                dashTitle: "Math IBL Analytics: Class Engagement, Accuracy & Agency Dashboard",
+                btnSeedDemoClass: "➕ Add Demo Class Data",
+                btnExportCSV: "📥 Export Class CSV (Excel/SPSS)",
+                btnCloseDash: "Close",
+                kpiStudentsLabel: "Total Students",
+                kpiStudentsSub: "Stored in local database",
+                kpiTimeLabel: "Avg. Time Engaged",
+                kpiTimeSub: "Time-on-task indicator",
+                kpiActionsLabel: "Avg. 3D Manipulations",
+                kpiActionsSub: "Drag + Rotate + Stack ops",
+                kpiAccLabel: "Avg. First-Try Accuracy",
+                kpiAccSub: "Correct on 1st submission",
+                tableTitle: "📊 Individual Student Engagement & Formula Derivation Accuracy",
+                tableHint: "Click any student row to inspect detailed action logs and qualitative reflections",
+                thId: "Student ID",
+                thName: "Name",
+                thTime: "Total Time",
+                thActions: "Drag/Rotate Ops",
+                thHints: "Scaffolds Used",
+                thSubmits: "Submissions (1st/Total)",
+                thAcc: "1st-Try Acc.",
+                thProg: "Levels Passed",
+                thOp: "Action",
+                btnInspect: "Inspect",
+                qualCorpusTitle: "📝 Student Qualitative Reflections & Odd-Box Analysis",
+                logsPanelTitle: "🕒 Real-Time Spatial Exploration & Error Logs (Latest 30)",
+                qualNotFilled: "(Not submitted yet)",
+                qualL4Label: "[Level 4 (4 Cartons) Rule]: ",
+                qualL5Label: "[Level 5 (6-Pack) Rule]: ",
+                qualL6Label: "[Level 6 (24-Case) Rule]: ",
+                qualL7Label: "[Level 7 (Custom Count) Discovery]: ",
+                qualOddLabel: "[Critical Thinking (Odd Number of Cartons)]: ",
+                noLogs: "No action logs recorded yet",
+                unitPeople: (n) => `${n}`,
+                unitSec: (n) => `${n}s`,
+                unitTimesVal: (n) => `${n}`,
+                unitLevelsVal: (c) => `${c} / 7`
+            }
+        };
+
+        function toggleLanguage() {
+            state.lang = state.lang === 'zh' ? 'en' : 'zh';
+            applyLanguageUI();
+        }
+
+        function applyLanguageUI() {
+            const dict = I18N[state.lang];
+            document.title = dict.docTitle;
+            document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+
+            document.querySelectorAll('.lang-toggle-label').forEach(el => {
+                el.textContent = dict.langBtn;
+            });
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key] !== undefined && typeof dict[key] === 'string') {
+                    el.innerHTML = dict[key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key] !== undefined) {
+                    el.placeholder = dict[key];
+                }
+            });
+
+            const xrayBtn = document.getElementById('btn-toggle-xray');
+            if (xrayBtn) {
+                xrayBtn.textContent = state.isXRay ? dict.xrayOn : dict.xrayOff;
+            }
+
+            if (!state.studentRecord) {
+                document.getElementById('display-student-info').textContent = dict.notLoggedIn;
+            } else {
+                const lvl = LEVELS[state.currentLevelIndex];
+                const curCount = lvl.isCustom ? state.customBoxCount : lvl.boxCount;
+                document.getElementById('level-badge').textContent = dict.levelBadge(lvl.id);
+                document.getElementById('level-title').textContent = state.lang === 'zh' ? lvl.title : lvl.titleEn;
+                document.getElementById('level-desc').innerHTML = state.lang === 'zh' ? lvl.desc : lvl.descEn;
+
+                const rawTotal = curCount * lvl.singleArea;
+                document.getElementById('info-single-spec').textContent = dict.specFormat(curCount, lvl.singleArea);
+                document.getElementById('formula-prefix-text').textContent = dict.formulaPrefix(rawTotal);
+
+                if (lvl.isCustom) {
+                    updateCustomParityBadge(curCount);
+                }
+
+                renderFaceTypeCheckboxes();
+                renderPerFaceBreakdownInputs();
+                renderPresetsForCurrentLevel();
+
+                selectBox(state.selectedBoxId);
+                updateLevelStatusUI();
+                renderLevelTabs();
+                renderVerifiedCards();
+                if (state.currentAnalysis) {
+                    analyzeCurrentArrangement(false);
+                }
+                if (!document.getElementById('teacher-dashboard-modal').classList.contains('hidden')) {
+                    openTeacherDashboard();
+                }
+            }
+        }
+
+        // ==================== 辅助函数：生成规则阵列 & 计算任意盒数 N 的最优长方体方案 ====================
+        function generateGridBoxes(nx, ny, nz, sx = 5, sy = 10, sz = 4) {
+            const list = [];
+            let id = 1;
+            const totalX = nx * sx;
+            const totalZ = nz * sz;
+            for (let iy = 0; iy < ny; iy++) {
+                for (let ix = 0; ix < nx; ix++) {
+                    for (let iz = 0; iz < nz; iz++) {
+                        list.push({
+                            id: id++,
+                            x: -totalX / 2 + sx / 2 + ix * sx,
+                            y: sy / 2 + iy * sy,
+                            z: -totalZ / 2 + sz / 2 + iz * sz,
+                            sx, sy, sz
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+
+        // 为任意 N 盒维他奶生成散开初始坐标
+        function generateScatteredBoxes(n) {
+            const cols = Math.min(6, Math.ceil(Math.sqrt(n)));
+            const rows = Math.ceil(n / cols);
+            const list = [];
+            let id = 1;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (id > n) break;
+                    list.push({
+                        id: id++,
+                        x: (c - (cols - 1) / 2) * 8.5,
+                        y: 5,
+                        z: (r - (rows - 1) / 2) * 7.5,
+                        sx: 5, sy: 10, sz: 4
+                    });
+                }
+            }
+            return list;
+        }
+
+        // 自动计算任意 N 盒维他奶（5×4×10）所有长方体因式分解及最小表面积
+        function computePresetsAndOptimalForN(n) {
+            const factorizations = [];
+            for (let nx = 1; nx <= n; nx++) {
+                if (n % nx !== 0) continue;
+                const rem = n / nx;
+                for (let ny = 1; ny <= rem; ny++) {
+                    if (rem % ny !== 0) continue;
+                    const nz = rem / ny;
+                    const X = 5 * nx, Y = 10 * ny, Z = 4 * nz;
+                    const area = 2 * (X * Y + X * Z + Y * Z);
+                    factorizations.push({ area, nx, ny, nz, dims: `${X}×${Z}×${Y}` });
+                }
+            }
+            factorizations.sort((a, b) => a.area - b.area);
+            const optimalArea = factorizations[0].area;
+
+            const presets = [];
+            // 1. 大面一字连排 (1 × 1 × N)
+            const linear = factorizations.find(f => f.nx === 1 && f.ny === 1 && f.nz === n) || factorizations[factorizations.length - 1];
+            presets.push({
+                name: `大面一字连排 1×1×${n} (${linear.dims} · ${linear.area}cm²)`,
+                nameEn: `1×1×${n} Large-Face Row (${linear.dims} · ${linear.area}cm²)`,
+                boxes: generateGridBoxes(linear.nx, linear.ny, linear.nz, 5, 10, 4)
+            });
+
+            // 2. 最省纸紧凑造型
+            const best = factorizations[0];
+            if (!(best.nx === linear.nx && best.ny === linear.ny && best.nz === linear.nz)) {
+                presets.push({
+                    name: `最省纸紧凑拼法 ${best.nx}×${best.ny}×${best.nz} (${best.dims} · 最优${best.area}cm²)`,
+                    nameEn: `Optimal ${best.nx}×${best.ny}×${best.nz} Layout (${best.dims} · ${best.area}cm²)`,
+                    boxes: generateGridBoxes(best.nx, best.ny, best.nz, 5, 10, 4)
+                });
+            }
+
+            // 3. 若还有第 3 种中等分解（如 12 盒的 2×2×3 或 2×1×6），也提供参考
+            const second = factorizations.find(f => f.area > best.area && f.area < linear.area);
+            if (second) {
+                presets.push({
+                    name: `对比拼法 ${second.nx}×${second.ny}×${second.nz} (${second.dims} · ${second.area}cm²)`,
+                    nameEn: `Alt ${second.nx}×${second.ny}×${second.nz} Layout (${second.dims} · ${second.area}cm²)`,
+                    boxes: generateGridBoxes(second.nx, second.ny, second.nz, 5, 10, 4)
+                });
+            }
+
+            return { optimalArea, presets };
+        }
+
+        // ==================== 七个由浅入深的探究关卡配置 ====================
+        const LEVELS = [
+            {
+                id: 1,
+                shortTitle: "关卡1：2个正方体",
+                shortTitleEn: "Level 1: 2 Cubes",
+                title: "关卡 1（正方体热身）：2 个正方体（棱长 5cm）拼在一起，减少了几个面？",
+                titleEn: "Level 1 (Cube Warm-up): Combine 2 cubes (5cm edge) — how many faces are hidden?",
+                desc: "工作台上有 2 个棱长 5cm 的正方体（单面 25cm²，单盒总面积 150cm²）。请用鼠标拖动或使用上方叠放按钮，探索<strong>左右拼</strong>与<strong>上下叠</strong> 2 种摆法，开启【X光透视】并按右侧三步完成推导。",
+                descEn: "Two 5cm cubes sit on the workbench (1 face = 25cm², single cube = 150cm²). Drag or stack them to explore <strong>side-by-side</strong> and <strong>vertical stacking</strong> (2 layouts), toggle [X-Ray Mode], and complete the 3-step derivation.",
+                boxType: "cube",
+                boxCount: 2,
+                singleArea: 150,
+                requiredConfigs: 2,
+                optimalArea: 250,
+                hasReflection: false,
+                hasOddInquiry: false,
+                initialBoxes: [
+                    { id: 1, x: -5.5, y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 },
+                    { id: 2, x: 5.5,  y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 }
+                ],
+                presets: [
+                    {
+                        name: "左右并排拼 (10×5×5)",
+                        nameEn: "Side-by-Side (10×5×5)",
+                        boxes: [
+                            { id: 1, x: -2.5, y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 },
+                            { id: 2, x: 2.5,  y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 }
+                        ]
+                    },
+                    {
+                        name: "上下叠放拼 (5×5×10)",
+                        nameEn: "Vertical Stack (5×5×10)",
+                        boxes: [
+                            { id: 1, x: 0, y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 },
+                            { id: 2, x: 0, y: 7.5, z: 0, sx: 5, sy: 5, sz: 5 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 2,
+                shortTitle: "关卡2：4个正方体",
+                shortTitleEn: "Level 2: 4 Cubes",
+                title: "关卡 2（正方体进阶）：4 个正方体（棱长 5cm）怎样拼更省纸？",
+                titleEn: "Level 2 (4 Cubes): How to arrange 4 cubes (5cm edge) to save the most paper?",
+                desc: "4 个正方体单独包装总面积为 600cm²。请自由拖拽拼接这 4 个正方体，对比<strong>一字排开</strong>与<strong>田字紧凑拼法</strong>，分别计算并验证它们减少了几个面、节省了多少用纸！",
+                descEn: "Four separate cubes have a total surface area of 600cm². Drag and snap them to compare a <strong>1×4 linear row</strong> vs. a <strong>compact 2×2 square</strong>, and verify how many faces and cm² are saved!",
+                boxType: "cube",
+                boxCount: 4,
+                singleArea: 150,
+                requiredConfigs: 2,
+                optimalArea: 400,
+                hasReflection: false,
+                hasOddInquiry: false,
+                initialBoxes: [
+                    { id: 1, x: -9, y: 2.5, z: -5, sx: 5, sy: 5, sz: 5 },
+                    { id: 2, x: 9,  y: 2.5, z: -5, sx: 5, sy: 5, sz: 5 },
+                    { id: 3, x: -9, y: 2.5, z: 5,  sx: 5, sy: 5, sz: 5 },
+                    { id: 4, x: 9,  y: 2.5, z: 5,  sx: 5, sy: 5, sz: 5 }
+                ],
+                presets: [
+                    {
+                        name: "一字长条拼 (20×5×5)",
+                        nameEn: "1×4 Linear Row (20×5×5)",
+                        boxes: [
+                            { id: 1, x: -7.5, y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 },
+                            { id: 2, x: -2.5, y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 },
+                            { id: 3, x: 2.5,  y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 },
+                            { id: 4, x: 7.5,  y: 2.5, z: 0, sx: 5, sy: 5, sz: 5 }
+                        ]
+                    },
+                    {
+                        name: "田字紧凑拼 (10×10×5)",
+                        nameEn: "2×2 Compact Square (10×10×5)",
+                        boxes: [
+                            { id: 1, x: -2.5, y: 2.5, z: -2.5, sx: 5, sy: 5, sz: 5 },
+                            { id: 2, x: 2.5,  y: 2.5, z: -2.5, sx: 5, sy: 5, sz: 5 },
+                            { id: 3, x: -2.5, y: 2.5, z: 2.5,  sx: 5, sy: 5, sz: 5 },
+                            { id: 4, x: 2.5,  y: 2.5, z: 2.5,  sx: 5, sy: 5, sz: 5 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 3,
+                shortTitle: "关卡3：2盒维他奶",
+                shortTitleEn: "Level 3: 2 Vitasoy",
+                title: "关卡 3（维他奶初探）：2 盒蓝盒维他奶（5×4×10cm）有哪 3 种拼法？",
+                titleEn: "Level 3 (2 Vitasoy Cartons): Explore all 3 ways to join two 5×4×10cm cartons!",
+                desc: "维他奶长 5cm、宽 4cm、高 10cm（大面 50cm²、中面 40cm²、小面 20cm²，单盒总面积 220cm²）。请自由拖拽与旋转，完整探索并验证<strong>大面重合、中面重合、小面重合</strong>全部 3 种拼接方式！",
+                descEn: "Each Vitasoy box is 5×4×10cm (Large=50cm², Medium=40cm², Small=20cm², single=220cm²). Drag and rotate to verify all 3 combinations: <strong>Large-face</strong>, <strong>Medium-face</strong>, and <strong>Small-face</strong> overlap!",
+                boxType: "vitasoy",
+                boxCount: 2,
+                singleArea: 220,
+                requiredConfigs: 3,
+                optimalArea: 340,
+                hasReflection: false,
+                hasOddInquiry: false,
+                initialBoxes: [
+                    { id: 1, x: -6, y: 5, z: 0, sx: 5, sy: 10, sz: 4 },
+                    { id: 2, x: 6,  y: 5, z: 0, sx: 5, sy: 10, sz: 4 }
+                ],
+                presets: [
+                    {
+                        name: "大面重合 (5×8×10)",
+                        nameEn: "Large Face Overlap (5×8×10)",
+                        boxes: [
+                            { id: 1, x: 0, y: 5, z: -2, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 0, y: 5, z: 2,  sx: 5, sy: 10, sz: 4 }
+                        ]
+                    },
+                    {
+                        name: "中面重合 (10×4×10)",
+                        nameEn: "Medium Face Overlap (10×4×10)",
+                        boxes: [
+                            { id: 1, x: -2.5, y: 5, z: 0, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 2.5,  y: 5, z: 0, sx: 5, sy: 10, sz: 4 }
+                        ]
+                    },
+                    {
+                        name: "小面上下叠 (5×4×20)",
+                        nameEn: "Small Face Stack (5×4×20)",
+                        boxes: [
+                            { id: 1, x: 0, y: 5,  z: 0, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 0, y: 15, z: 0, sx: 5, sy: 10, sz: 4 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 4,
+                shortTitle: "关卡4：4盒维他奶",
+                shortTitleEn: "Level 4: 4 Vitasoy",
+                title: "关卡 4（维他奶进阶）：4 盒维他奶（5×4×10cm）的多面重叠分步推导",
+                titleEn: "Level 4 (4 Vitasoy Cartons): Step-by-step derivation for multi-face overlaps!",
+                desc: "4 盒维他奶单独包装需 880cm²。注意：当拼成双排紧凑造型时，会<strong>同时出现大面与中面两种重叠面</strong>！请利用右侧三步推导区，逐类勾选并计算每一种重叠面的减少面积，找出最省纸方案（520cm²）。",
+                descEn: "Four separate cartons require 880cm². Note: A compact 2×2 layout hides <strong>BOTH Large and Medium faces simultaneously</strong>! Use the 3-step panel on the right to select both face types, calculate each separately, and find the 520cm² optimum.",
+                boxType: "vitasoy",
+                boxCount: 4,
+                singleArea: 220,
+                requiredConfigs: 3,
+                optimalArea: 520,
+                hasReflection: true,
+                hasOddInquiry: false,
+                initialBoxes: [
+                    { id: 1, x: -9, y: 5, z: -5, sx: 5, sy: 10, sz: 4 },
+                    { id: 2, x: 9,  y: 5, z: -5, sx: 5, sy: 10, sz: 4 },
+                    { id: 3, x: -9, y: 5, z: 5,  sx: 5, sy: 10, sz: 4 },
+                    { id: 4, x: 9,  y: 5, z: 5,  sx: 5, sy: 10, sz: 4 }
+                ],
+                presets: [
+                    {
+                        name: "大面一字连排 (5×16×10)",
+                        nameEn: "1×4 Large-Face Row (5×16×10)",
+                        boxes: [
+                            { id: 1, x: 0, y: 5, z: -6, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 0, y: 5, z: -2, sx: 5, sy: 10, sz: 4 },
+                            { id: 3, x: 0, y: 5, z: 2,  sx: 5, sy: 10, sz: 4 },
+                            { id: 4, x: 0, y: 5, z: 6,  sx: 5, sy: 10, sz: 4 }
+                        ]
+                    },
+                    {
+                        name: "双排混合重叠最优 (10×8×10)",
+                        nameEn: "2×2 Mixed-Overlap Optimal (10×8×10)",
+                        boxes: [
+                            { id: 1, x: -2.5, y: 5, z: -2, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 2.5,  y: 5, z: -2, sx: 5, sy: 10, sz: 4 },
+                            { id: 3, x: -2.5, y: 5, z: 2,  sx: 5, sy: 10, sz: 4 },
+                            { id: 4, x: 2.5,  y: 5, z: 2,  sx: 5, sy: 10, sz: 4 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 5,
+                shortTitle: "关卡5：6盒半打装",
+                shortTitleEn: "Level 5: 6-Pack",
+                title: "关卡 5（超市半打装挑战）：6 盒维他奶（5×4×10cm）最省纸包装设计",
+                titleEn: "Level 5 (Supermarket 6-Pack Challenge): Optimal wrapping for 6 Vitasoy cartons",
+                desc: "超市常将 6 盒维他奶打包出售（单独包装需 1320cm²）。请综合运用“重合面最大”与“重合面最多（接近正方体）”的规律，探索至少 2 种方案并攻克<strong>最小表面积 680cm²（10×12×10cm）</strong>！",
+                descEn: "Six separate cartons require 1320cm². Combine both principles (maximizing overlapping face size & maximizing contact count near a cube) to explore at least 2 layouts and achieve the <strong>680cm² (10×12×10cm)</strong> optimum!",
+                boxType: "vitasoy",
+                boxCount: 6,
+                singleArea: 220,
+                requiredConfigs: 2,
+                optimalArea: 680,
+                hasReflection: true,
+                hasOddInquiry: false,
+                initialBoxes: [
+                    { id: 1, x: -11, y: 5, z: -6, sx: 5, sy: 10, sz: 4 },
+                    { id: 2, x: 0,   y: 5, z: -6, sx: 5, sy: 10, sz: 4 },
+                    { id: 3, x: 11,  y: 5, z: -6, sx: 5, sy: 10, sz: 4 },
+                    { id: 4, x: -11, y: 5, z: 6,  sx: 5, sy: 10, sz: 4 },
+                    { id: 5, x: 0,   y: 5, z: 6,  sx: 5, sy: 10, sz: 4 },
+                    { id: 6, x: 11,  y: 5, z: 6,  sx: 5, sy: 10, sz: 4 }
+                ],
+                presets: [
+                    {
+                        name: "大面单排6连包 (5×24×10)",
+                        nameEn: "1×6 Large-Face Row (5×24×10)",
+                        boxes: [
+                            { id: 1, x: 0, y: 5, z: -10, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 0, y: 5, z: -6,  sx: 5, sy: 10, sz: 4 },
+                            { id: 3, x: 0, y: 5, z: -2,  sx: 5, sy: 10, sz: 4 },
+                            { id: 4, x: 0, y: 5, z: 2,   sx: 5, sy: 10, sz: 4 },
+                            { id: 5, x: 0, y: 5, z: 6,   sx: 5, sy: 10, sz: 4 },
+                            { id: 6, x: 0, y: 5, z: 10,  sx: 5, sy: 10, sz: 4 }
+                        ]
+                    },
+                    {
+                        name: "超市最优2×3方阵 (10×12×10)",
+                        nameEn: "2×3 Optimal 6-Pack (10×12×10)",
+                        boxes: [
+                            { id: 1, x: -2.5, y: 5, z: -4, sx: 5, sy: 10, sz: 4 },
+                            { id: 2, x: 2.5,  y: 5, z: -4, sx: 5, sy: 10, sz: 4 },
+                            { id: 3, x: -2.5, y: 5, z: 0,  sx: 5, sy: 10, sz: 4 },
+                            { id: 4, x: 2.5,  y: 5, z: 0,  sx: 5, sy: 10, sz: 4 },
+                            { id: 5, x: -2.5, y: 5, z: 4,  sx: 5, sy: 10, sz: 4 },
+                            { id: 6, x: 2.5,  y: 5, z: 4,  sx: 5, sy: 10, sz: 4 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 6,
+                shortTitle: "关卡6：24盒整箱挑战",
+                shortTitleEn: "Level 6: 24-Box Case",
+                title: "关卡 6（终极整箱大挑战）：24 盒整箱维他奶（5×4×10cm）如何装箱最省纸？",
+                titleEn: "Level 6 (Ultimate 24-Carton Wholesale Case): Minimize cardboard for 24 cartons!",
+                desc: "超市整箱批发通常每箱装 <strong>24 盒维他奶</strong>（分开包装总面积高达 24×220 = <strong>5280cm²</strong>）。当拼成多层立体整箱时，<strong>大面、中面、小面会同时发生重叠</strong>！请开启【X光透视】并对比单层扁平箱与立体近正方体整箱（最优仅需 <strong>1720cm²</strong>）。",
+                descEn: "A wholesale case holds <strong>24 Vitasoy cartons</strong> (separate area = <strong>5280cm²</strong>). In a multi-layer 3D case, <strong>Large, Medium, and Small faces overlap simultaneously</strong>! Toggle [X-Ray Mode] and compare flat vs. near-cube 3D cases (optimum = <strong>1720cm²</strong>).",
+                boxType: "vitasoy",
+                boxCount: 24,
+                singleArea: 220,
+                requiredConfigs: 2,
+                optimalArea: 1720,
+                hasReflection: true,
+                hasOddInquiry: false,
+                initialBoxes: generateGridBoxes(4, 1, 6, 5, 10, 4),
+                presets: [
+                    {
+                        name: "单层平铺整箱 4×1×6 (20×24×10)",
+                        nameEn: "1-Layer Flat Case 4×1×6 (20×24×10)",
+                        boxes: generateGridBoxes(4, 1, 6, 5, 10, 4)
+                    },
+                    {
+                        name: "双层整箱 3×2×4 (15×16×20 · 最优1720)",
+                        nameEn: "2-Layer Optimal 3×2×4 (15×16×20 · 1720cm²)",
+                        boxes: generateGridBoxes(3, 2, 4, 5, 10, 4)
+                    },
+                    {
+                        name: "三层整箱 2×3×4 (10×16×30)",
+                        nameEn: "3-Layer Tall Case 2×3×4 (10×16×30)",
+                        boxes: generateGridBoxes(2, 3, 4, 5, 10, 4)
+                    }
+                ]
+            },
+            {
+                id: 7,
+                shortTitle: "关卡7：自由盒数与奇数思辨",
+                shortTitleEn: "Level 7: Custom & Odd Inquiry",
+                title: "关卡 7（自由探究与思辨）：自定义 10 盒、12 盒或奇数个盒子（如 5、7、9 盒）会怎样？",
+                titleEn: "Level 7 (Custom Sandbox & Inquiry): Test 10, 12, or ODD counts (5, 7, 9 cartons)!",
+                desc: "现在由你做主！请在下方<strong>自由实验参数台</strong>自行输入盒数（例如 <strong>10 盒、12 盒</strong>，或尝试 <strong>5 盒、7 盒、9 盒等奇数</strong>），拼接并验证包装面积，最后在右下角回答：<strong>如果是奇数个盒子，会出现什么情况？</strong>",
+                descEn: "You're the packaging engineer! Enter any count below (e.g., <strong>10 or 12 cartons</strong>, or try <strong>odd counts like 5, 7, or 9</strong>), build & verify your layouts, and answer the critical thinking question: <strong>What happens if there is an odd number of cartons?</strong>",
+                boxType: "vitasoy",
+                isCustom: true,
+                boxCount: 10,
+                singleArea: 220,
+                requiredConfigs: 2,
+                optimalArea: 1000,
+                hasReflection: true,
+                hasOddInquiry: true,
+                initialBoxes: generateScatteredBoxes(10),
+                presets: []
+            }
+        ];
+
+        // ==================== 全局状态与多学生数据持久化 ====================
+        const state = {
+            lang: "zh",
+            currentStudentKey: "",
+            studentRecord: null,
+            currentLevelIndex: 0,
+            customBoxCount: 10,
+            customOptimalArea: 1000,
+            customPresets: [],
+            selectedBoxId: 1,
+            boxes: [],
+            selectedFaceTypes: new Set(),
+            currentAnalysis: null,
+            isXRay: false,
+            timerInterval: null
+        };
+
+        function createFreshStudentRecord(name, id) {
+            return {
+                studentName: name,
+                studentId: id,
+                lastActive: new Date().toLocaleString(),
+                totalTimeSec: 0,
+                totalActions: 0,
+                scaffoldHintsUsed: 0,
+                totalSubmissions: 0,
+                firstTrySuccessCount: 0,
+                oddBoxInquiryAnswer: "",
+                levels: LEVELS.map(lvl => ({
+                    levelId: lvl.id,
+                    shortTitle: lvl.shortTitle,
+                    timeSpentSec: 0,
+                    actionCount: 0,
+                    submitCount: 0,
+                    firstTrySuccess: 0,
+                    verifiedCards: [],
+                    completed: false,
+                    qualitativeText: ""
+                })),
+                actionLogs: []
+            };
+        }
+
+        function loadAllRecordsFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveCurrentStudentRecord() {
+            if (!state.currentStudentKey || !state.studentRecord) return;
+            try {
+                state.studentRecord.lastActive = new Date().toLocaleString();
+                const all = loadAllRecordsFromStorage();
+                all[state.currentStudentKey] = state.studentRecord;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+            } catch (e) {
+                console.warn("Storage save failed", e);
+            }
+        }
+
+        function appendActionLog(msg) {
+            if (!state.studentRecord) return;
+            const timeStr = new Date().toTimeString().split(' ')[0];
+            state.studentRecord.actionLogs.unshift(`[${timeStr}] ${msg}`);
+            if (state.studentRecord.actionLogs.length > 80) {
+                state.studentRecord.actionLogs.length = 80;
+            }
+            saveCurrentStudentRecord();
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // ==================== 登录与切换学生 ====================
+        document.getElementById('btn-fill-demo').addEventListener('click', () => {
+            document.getElementById('input-student-name').value = state.lang === 'zh' ? "林子轩" : "Alex Lin";
+            document.getElementById('input-student-id').value = "20260809";
+            document.getElementById('login-error').classList.add('hidden');
+        });
+
+        document.getElementById('btn-start-game').addEventListener('click', () => {
+            const name = document.getElementById('input-student-name').value.trim();
+            const id = document.getElementById('input-student-id').value.trim();
+            if (!name || !id) {
+                document.getElementById('login-error').classList.remove('hidden');
+                return;
+            }
+
+            const key = `${id}_${name}`;
+            const allRecords = loadAllRecordsFromStorage();
+            if (!allRecords[key]) {
+                allRecords[key] = createFreshStudentRecord(name, id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allRecords));
+            } else if (allRecords[key].levels.length < LEVELS.length) {
+                for (let idx = allRecords[key].levels.length; idx < LEVELS.length; idx++) {
+                    allRecords[key].levels.push({
+                        levelId: LEVELS[idx].id,
+                        shortTitle: LEVELS[idx].shortTitle,
+                        timeSpentSec: 0,
+                        actionCount: 0,
+                        submitCount: 0,
+                        firstTrySuccess: 0,
+                        verifiedCards: [],
+                        completed: false,
+                        qualitativeText: ""
+                    });
+                }
+            }
+
+            state.currentStudentKey = key;
+            state.studentRecord = allRecords[key];
+
+            document.getElementById('display-student-info').textContent = `${name} (${id})`;
+            document.getElementById('login-modal').classList.add('hidden');
+
+            appendActionLog(`Student ${name} (${id}) logged in`);
+            startTimer();
+            initThreeJS();
+            loadLevel(0);
+        });
+
+        function switchStudentPrompt() {
+            saveCurrentStudentRecord();
+            document.getElementById('input-student-name').value = "";
+            document.getElementById('input-student-id').value = "";
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                if (!state.studentRecord) return;
+                if (!document.getElementById('login-modal').classList.contains('hidden')) return;
+                if (!document.getElementById('teacher-dashboard-modal').classList.contains('hidden')) return;
+
+                const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+                lvlStat.timeSpentSec += 1;
+                state.studentRecord.totalTimeSec += 1;
+                document.getElementById('hud-level-time').textContent = formatTime(lvlStat.timeSpentSec);
+
+                if (lvlStat.timeSpentSec % 5 === 0) {
+                    saveCurrentStudentRecord();
+                }
+            }, 1000);
+        }
+
+        // ==================== 关卡 7：自定义盒数生成器 ====================
+        function updateCustomParityBadge(n) {
+            const badge = document.getElementById('custom-parity-badge');
+            const dict = I18N[state.lang];
+            if (n % 2 === 0) {
+                badge.className = "text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800";
+                badge.textContent = dict.parityEven(n);
+            } else if (n === 9 || n === 15 || n === 21) {
+                badge.className = "text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300";
+                badge.textContent = dict.parityOddComposite(n);
+            } else {
+                badge.className = "text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300";
+                badge.textContent = dict.parityOddPrime(n);
+            }
+        }
+
+        function applyCustomCountPreset(n) {
+            document.getElementById('input-custom-box-count').value = n;
+            generateCustomLevelBoxes();
+        }
+
+        function generateCustomLevelBoxes() {
+            const rawVal = parseInt(document.getElementById('input-custom-box-count').value, 10);
+            const n = Math.max(2, Math.min(24, isNaN(rawVal) ? 10 : rawVal));
+            document.getElementById('input-custom-box-count').value = n;
+
+            state.customBoxCount = n;
+            const { optimalArea, presets } = computePresetsAndOptimalForN(n);
+            state.customOptimalArea = optimalArea;
+            state.customPresets = presets;
+
+            const lvl = LEVELS[state.currentLevelIndex];
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            const dict = I18N[state.lang];
+
+            const rawTotal = n * lvl.singleArea;
+            document.getElementById('info-single-spec').textContent = dict.specFormat(n, lvl.singleArea);
+            document.getElementById('info-raw-total').textContent = `${rawTotal} cm²`;
+            document.getElementById('formula-prefix-text').textContent = dict.formulaPrefix(rawTotal);
+
+            updateCustomParityBadge(n);
+            renderPresetsForCurrentLevel();
+
+            state.boxes = generateScatteredBoxes(n);
+            state.selectedBoxId = 1;
+            spherical.radius = n >= 16 ? 44 : 35;
+            updateCameraPosition();
+
+            lvlStat.actionCount += 1;
+            state.studentRecord.totalActions += 1;
+            appendActionLog(`[Level 7] Generated custom count: ${n} cartons`);
+
+            selectBox(1);
+            rebuildSceneBoxes();
+            analyzeCurrentArrangement(false);
+            clearDeductionInputs();
+            document.getElementById('feedback-box').classList.add('hidden');
+            updateHUD();
+            saveCurrentStudentRecord();
+        }
+
+        function renderPresetsForCurrentLevel() {
+            const lvl = LEVELS[state.currentLevelIndex];
+            const dict = I18N[state.lang];
+            const presetList = lvl.isCustom ? state.customPresets : lvl.presets;
+            const presetContainer = document.getElementById('preset-buttons-container');
+            presetContainer.innerHTML = '';
+            presetList.forEach((p, pIdx) => {
+                const pBtn = document.createElement('button');
+                pBtn.type = 'button';
+                pBtn.className = "px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold transition";
+                pBtn.textContent = dict.presetPrefix(state.lang === 'zh' ? p.name : p.nameEn);
+                pBtn.onclick = () => applyScaffoldPreset(pIdx);
+                presetContainer.appendChild(pBtn);
+            });
+        }
+
+        // ==================== 三步分步推导区交互逻辑 ====================
+        function getAvailableFaceKeysForLevel(lvl) {
+            return lvl.boxType === 'cube'
+                ? ['cube_25']
+                : ['vita_50', 'vita_40', 'vita_20'];
+        }
+
+        function renderFaceTypeCheckboxes() {
+            const lvl = LEVELS[state.currentLevelIndex];
+            const container = document.getElementById('face-type-checkboxes');
+            const keys = getAvailableFaceKeysForLevel(lvl);
+
+            container.innerHTML = keys.map(k => {
+                const info = FACE_CATALOG[k];
+                const labelText = state.lang === 'zh' ? info.zh : info.en;
+                const checked = state.selectedFaceTypes.has(k) ? 'checked' : '';
+                return `
+                    <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition select-none ${
+                        checked ? 'bg-sky-600 text-white border-sky-700 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-sky-50'
+                    }">
+                        <input type="checkbox" value="${k}" ${checked} onchange="toggleFaceTypeSelection('${k}', this.checked)" class="accent-amber-400 w-3.5 h-3.5">
+                        <span>${labelText}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        function toggleFaceTypeSelection(faceKey, isChecked) {
+            if (isChecked) {
+                state.selectedFaceTypes.add(faceKey);
+            } else {
+                state.selectedFaceTypes.delete(faceKey);
+            }
+            renderFaceTypeCheckboxes();
+            renderPerFaceBreakdownInputs();
+        }
+
+        function renderPerFaceBreakdownInputs() {
+            const container = document.getElementById('per-face-breakdown-container');
+            const dict = I18N[state.lang];
+            const orderedKeys = ['cube_25', 'vita_50', 'vita_40', 'vita_20'].filter(k => state.selectedFaceTypes.has(k));
+
+            if (orderedKeys.length === 0) {
+                container.innerHTML = `
+                    <div class="text-[11px] text-slate-400 italic py-1">
+                        ${dict.step2EmptyHint}
+                    </div>
+                `;
+                return;
+            }
+
+            const cachedValues = {};
+            orderedKeys.forEach(k => {
+                const fEl = document.getElementById(`sub-faces-${k}`);
+                const aEl = document.getElementById(`sub-area-${k}`);
+                if (fEl || aEl) {
+                    cachedValues[k] = {
+                        faces: fEl ? fEl.value : '',
+                        area: aEl ? aEl.value : ''
+                    };
+                }
+            });
+
+            container.innerHTML = orderedKeys.map(k => {
+                const info = FACE_CATALOG[k];
+                const name = state.lang === 'zh' ? info.zh : info.en;
+                const prev = cachedValues[k] || { faces: '', area: '' };
+                return `
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                        <span class="font-extrabold text-slate-800">${dict.step2RowLabel(name)}</span>
+                        <input type="number" id="sub-faces-${k}" value="${prev.faces}" placeholder="${dict.phInt}"
+                            class="w-16 px-2 py-1 rounded-md border border-slate-300 bg-white text-center font-extrabold text-slate-800 focus:border-sky-500 outline-none">
+                        <span class="text-slate-600 font-semibold">${dict.step2RowMid(info.area)}</span>
+                        <div class="relative flex-1 min-w-[82px]">
+                            <input type="number" id="sub-area-${k}" value="${prev.area}" placeholder="${dict.phArea}"
+                                class="w-full px-2 py-1 pr-8 rounded-md border border-slate-300 bg-white font-extrabold text-sky-900 focus:border-sky-500 outline-none">
+                            <span class="absolute right-2 top-1 text-[11px] text-slate-400 font-bold">cm²</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== 关卡加载与脚手架预设 ====================
+        function renderLevelTabs() {
+            const container = document.getElementById('level-tabs');
+            container.innerHTML = '';
+            LEVELS.forEach((lvl, idx) => {
+                const lvlStat = state.studentRecord.levels[idx];
+                const isActive = idx === state.currentLevelIndex;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 border ${
+                    isActive
+                        ? 'bg-sky-600 text-white border-sky-700 shadow-sm'
+                        : lvlStat.completed
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`;
+                const tabLabel = state.lang === 'zh' ? lvl.shortTitle : lvl.shortTitleEn;
+                btn.innerHTML = `<span>${tabLabel}</span>${lvlStat.completed ? '<span>✅</span>' : ''}`;
+                btn.onclick = () => {
+                    if (idx !== state.currentLevelIndex) {
+                        appendActionLog(`Switched to ${lvl.shortTitleEn}`);
+                        loadLevel(idx);
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function loadLevel(idx) {
+            state.currentLevelIndex = idx;
+            const lvl = LEVELS[idx];
+            const lvlStat = state.studentRecord.levels[idx];
+            const dict = I18N[state.lang];
+
+            document.getElementById('level-badge').textContent = dict.levelBadge(lvl.id);
+            document.getElementById('level-title').textContent = state.lang === 'zh' ? lvl.title : lvl.titleEn;
+            document.getElementById('level-desc').innerHTML = state.lang === 'zh' ? lvl.desc : lvl.descEn;
+            document.getElementById('hud-level-time').textContent = formatTime(lvlStat.timeSpentSec);
+
+            const customBuilder = document.getElementById('custom-box-builder');
+            if (lvl.isCustom) {
+                customBuilder.classList.remove('hidden');
+                const n = state.customBoxCount;
+                document.getElementById('input-custom-box-count').value = n;
+                const { optimalArea, presets } = computePresetsAndOptimalForN(n);
+                state.customOptimalArea = optimalArea;
+                state.customPresets = presets;
+                updateCustomParityBadge(n);
+            } else {
+                customBuilder.classList.add('hidden');
+            }
+
+            const activeCount = lvl.isCustom ? state.customBoxCount : lvl.boxCount;
+            const rawTotal = activeCount * lvl.singleArea;
+            document.getElementById('info-single-spec').textContent = dict.specFormat(activeCount, lvl.singleArea);
+            document.getElementById('info-raw-total').textContent = `${rawTotal} cm²`;
+            document.getElementById('formula-prefix-text').textContent = dict.formulaPrefix(rawTotal);
+
+            spherical.radius = activeCount >= 16 ? 45 : 34;
+            updateCameraPosition();
+
+            clearDeductionInputs();
+            document.getElementById('feedback-box').classList.add('hidden');
+
+            const refBox = document.getElementById('qualitative-reflection-box');
+            const oddSection = document.getElementById('odd-box-inquiry-section');
+            if (lvl.hasReflection) {
+                refBox.classList.remove('hidden');
+                document.getElementById('input-qualitative-reason').value = lvlStat.qualitativeText || "";
+                document.getElementById('qualitative-saved-tip').classList.add('hidden');
+                if (lvl.hasOddInquiry) {
+                    oddSection.classList.remove('hidden');
+                    document.getElementById('input-odd-box-answer').value = state.studentRecord.oddBoxInquiryAnswer || "";
+                } else {
+                    oddSection.classList.add('hidden');
+                }
+            } else {
+                refBox.classList.add('hidden');
+                oddSection.classList.add('hidden');
+            }
+
+            renderPresetsForCurrentLevel();
+            updateLevelStatusUI();
+            renderLevelTabs();
+            resetCurrentLevelBoxes(false);
+            renderVerifiedCards();
+            updateHUD();
+        }
+
+        function applyScaffoldPreset(presetIdx) {
+            const lvl = LEVELS[state.currentLevelIndex];
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            const presetList = lvl.isCustom ? state.customPresets : lvl.presets;
+            const preset = presetList[presetIdx];
+            if (!preset) return;
+
+            state.boxes = preset.boxes.map(b => ({ ...b }));
+            state.selectedBoxId = 1;
+            state.studentRecord.scaffoldHintsUsed += 1;
+            lvlStat.actionCount += 1;
+            state.studentRecord.totalActions += 1;
+
+            appendActionLog(`[${lvl.shortTitleEn}] Applied preset: ${preset.nameEn}`);
+            selectBox(1);
+            rebuildSceneBoxes();
+            analyzeCurrentArrangement(true);
+            clearDeductionInputs();
+            updateHUD();
+            saveCurrentStudentRecord();
+        }
+
+        function clearDeductionInputs() {
+            state.selectedFaceTypes.clear();
+            renderFaceTypeCheckboxes();
+            renderPerFaceBreakdownInputs();
+            document.getElementById('ans-reduced-area').value = "";
+            document.getElementById('ans-final-area').value = "";
+        }
+
+        function resetCurrentLevelBoxes(recordAction = true) {
+            const lvl = LEVELS[state.currentLevelIndex];
+            if (lvl.isCustom) {
+                state.boxes = generateScatteredBoxes(state.customBoxCount);
+            } else {
+                state.boxes = lvl.initialBoxes.map(b => ({ ...b }));
+            }
+            state.selectedBoxId = 1;
+            if (recordAction) {
+                const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+                lvlStat.actionCount += 1;
+                state.studentRecord.totalActions += 1;
+                appendActionLog(`[${lvl.shortTitleEn}] Reset boxes`);
+                updateHUD();
+                saveCurrentStudentRecord();
+            }
+            selectBox(1);
+            rebuildSceneBoxes();
+            analyzeCurrentArrangement(false);
+        }
+
+        function updateLevelStatusUI() {
+            const lvl = LEVELS[state.currentLevelIndex];
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            const dict = I18N[state.lang];
+            const pill = document.getElementById('level-status-pill');
+            const goalBadge = document.getElementById('level-goal-progress');
+
+            const count = lvlStat.verifiedCards.length;
+            const hasOptimal = lvlStat.verifiedCards.some(c => c.isOptimal);
+
+            goalBadge.textContent = dict.goalProgress(count, lvl.requiredConfigs, hasOptimal);
+
+            if (lvlStat.completed) {
+                pill.className = "flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
+                pill.textContent = dict.statusPassed;
+            } else {
+                pill.className = "flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300";
+                pill.textContent = dict.statusExploring;
+            }
+        }
+
+        // ==================== 3D 盒子姿态操控与多层磁吸碰撞算法 ====================
+        function getBoxLayerIndex(box) {
+            return Math.max(1, Math.round((box.y - box.sy / 2) / box.sy) + 1);
+        }
+
+        function selectBox(id) {
+            state.selectedBoxId = id;
+            const box = state.boxes.find(b => b.id === id);
+            if (!box) return;
+            const dict = I18N[state.lang];
+            const curLayer = getBoxLayerIndex(box);
+            document.getElementById('selected-box-badge').textContent = dict.boxUnit(box.id, box.sx, box.sz, box.sy, curLayer);
+
+            const stackBtn = document.getElementById('btn-stack-toggle');
+            const nextLayer = curLayer >= 3 ? 1 : curLayer + 1;
+            stackBtn.textContent = dict.btnStackLayer(nextLayer);
+            highlightSelectedBoxOutline();
+        }
+
+        function rotateSelectedBox(axis) {
+            const box = state.boxes.find(b => b.id === state.selectedBoxId);
+            if (!box) return;
+            const lvl = LEVELS[state.currentLevelIndex];
+            const dict = I18N[state.lang];
+            if (lvl.boxType === 'cube') {
+                showFloatingBanner(dict.cubeRotTip);
+            }
+
+            const prevLayer = getBoxLayerIndex(box);
+            if (axis === 'Y') [box.sx, box.sz] = [box.sz, box.sx];
+            else if (axis === 'X') [box.sy, box.sz] = [box.sz, box.sy];
+            else if (axis === 'Z') [box.sx, box.sy] = [box.sy, box.sx];
+
+            box.y = box.sy / 2 + (prevLayer - 1) * box.sy;
+            applyMagneticSnap(box);
+
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            lvlStat.actionCount += 1;
+            state.studentRecord.totalActions += 1;
+            appendActionLog(`[${lvl.shortTitleEn}] Rotated Box #${box.id} (${axis}-axis)`);
+
+            selectBox(box.id);
+            rebuildSceneBoxes();
+            analyzeCurrentArrangement(true);
+            updateHUD();
+            saveCurrentStudentRecord();
+        }
+
+        function toggleStackSelectedBox() {
+            const box = state.boxes.find(b => b.id === state.selectedBoxId);
+            if (!box) return;
+            const lvl = LEVELS[state.currentLevelIndex];
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+
+            const curLayer = getBoxLayerIndex(box);
+            const nextLayer = curLayer >= 3 ? 1 : curLayer + 1;
+
+            if (nextLayer === 1) {
+                box.y = box.sy / 2;
+                box.x += 5.5;
+                applyMagneticSnap(box);
+            } else {
+                const targetBelowY = box.sy / 2 + (nextLayer - 2) * box.sy;
+                const base = state.boxes.find(b => b.id !== box.id && Math.abs(b.y - targetBelowY) < 1.0)
+                          || state.boxes.find(b => b.id !== box.id);
+                if (base) {
+                    box.x = base.x;
+                    box.z = base.z;
+                    box.y = base.y + base.sy / 2 + box.sy / 2;
+                } else {
+                    box.y = box.sy / 2 + (nextLayer - 1) * box.sy;
+                }
+            }
+
+            lvlStat.actionCount += 1;
+            state.studentRecord.totalActions += 1;
+            appendActionLog(`[${lvl.shortTitleEn}] Stacked Box #${box.id} to Layer ${nextLayer}`);
+
+            selectBox(box.id);
+            rebuildSceneBoxes();
+            analyzeCurrentArrangement(true);
+            updateHUD();
+            saveCurrentStudentRecord();
+        }
+
+        function applyMagneticSnap(activeBox) {
+            const THRESHOLD = 2.2;
+            for (const other of state.boxes) {
+                if (other.id === activeBox.id) continue;
+                const halfX = (activeBox.sx + other.sx) / 2;
+                const halfZ = (activeBox.sz + other.sz) / 2;
+                const dx = activeBox.x - other.x;
+                const dz = activeBox.z - other.z;
+
+                if (Math.abs(activeBox.y - other.y) < 1.0) {
+                    if (Math.abs(Math.abs(dx) - halfX) < THRESHOLD && Math.abs(dz) < halfZ) {
+                        activeBox.x = other.x + (dx >= 0 ? halfX : -halfX);
+                        if (Math.abs(dz) < THRESHOLD) activeBox.z = other.z;
+                    }
+                    if (Math.abs(Math.abs(dz) - halfZ) < THRESHOLD && Math.abs(dx) < halfX) {
+                        activeBox.z = other.z + (dz >= 0 ? halfZ : -halfZ);
+                        if (Math.abs(dx) < THRESHOLD) activeBox.x = other.x;
+                    }
+                } else if (activeBox.y > other.y + 1.0) {
+                    if (Math.abs(dx) < THRESHOLD && Math.abs(dz) < THRESHOLD) {
+                        activeBox.x = other.x;
+                        activeBox.z = other.z;
+                        activeBox.y = other.y + other.sy / 2 + activeBox.sy / 2;
+                    }
+                }
+            }
+            resolveCollisions(activeBox);
+        }
+
+        function resolveCollisions(activeBox) {
+            const EPS = 0.05;
+            for (const other of state.boxes) {
+                if (other.id === activeBox.id) continue;
+                const overlapY = Math.min(activeBox.y + activeBox.sy / 2, other.y + other.sy / 2) -
+                                 Math.max(activeBox.y - activeBox.sy / 2, other.y - other.sy / 2);
+                if (overlapY <= EPS) continue;
+
+                const overlapX = (activeBox.sx + other.sx) / 2 - Math.abs(activeBox.x - other.x);
+                const overlapZ = (activeBox.sz + other.sz) / 2 - Math.abs(activeBox.z - other.z);
+
+                if (overlapX > EPS && overlapZ > EPS) {
+                    if (overlapX < overlapZ) {
+                        activeBox.x = other.x + (activeBox.x >= other.x ? 1 : -1) * ((activeBox.sx + other.sx) / 2);
+                    } else {
+                        activeBox.z = other.z + (activeBox.z >= other.z ? 1 : -1) * ((activeBox.sz + other.sz) / 2);
+                    }
+                }
+            }
+        }
+
+        // ==================== 实时几何分析（分面统计每种重叠面的贴合处数与面积） ====================
+        function areaToFaceKey(boxType, area) {
+            if (boxType === 'cube' && area === 25) return 'cube_25';
+            if (area === 50) return 'vita_50';
+            if (area === 40) return 'vita_40';
+            if (area === 20) return 'vita_20';
+            return 'unknown';
+        }
+
+        function analyzeCurrentArrangement(showBanner) {
+            const lvl = LEVELS[state.currentLevelIndex];
+            const activeCount = lvl.isCustom ? state.customBoxCount : lvl.boxCount;
+            const EPS = 0.15;
+            const contactPairs = [];
+            let singleContactSum = 0;
+
+            const breakdownByFace = {};
+
+            for (let i = 0; i < state.boxes.length; i++) {
+                for (let j = i + 1; j < state.boxes.length; j++) {
+                    const a = state.boxes[i];
+                    const b = state.boxes[j];
+
+                    const dx = Math.abs(a.x - b.x);
+                    const dy = Math.abs(a.y - b.y);
+                    const dz = Math.abs(a.z - b.z);
+
+                    const overlapX = Math.max(0, Math.min(a.x + a.sx / 2, b.x + b.sx / 2) - Math.max(a.x - a.sx / 2, b.x - b.sx / 2));
+                    const overlapY = Math.max(0, Math.min(a.y + a.sy / 2, b.y + b.sy / 2) - Math.max(a.y - a.sy / 2, b.y - b.sy / 2));
+                    const overlapZ = Math.max(0, Math.min(a.z + a.sz / 2, b.z + b.sz / 2) - Math.max(a.z - a.sz / 2, b.z - b.sz / 2));
+
+                    let matched = null;
+                    if (Math.abs(dx - (a.sx + b.sx) / 2) < EPS && overlapY > 0.5 && overlapZ > 0.5) {
+                        const area = Math.round(overlapY * overlapZ);
+                        matched = {
+                            singleArea: area,
+                            center: [a.x + (a.x < b.x ? a.sx / 2 : -a.sx / 2), (Math.max(a.y - a.sy / 2, b.y - b.sy / 2) + Math.min(a.y + a.sy / 2, b.y + b.sy / 2)) / 2, (Math.max(a.z - a.sz / 2, b.z - b.sz / 2) + Math.min(a.z + a.sz / 2, b.z + b.sz / 2)) / 2],
+                            planeSize: [overlapZ, overlapY],
+                            axis: 'X'
+                        };
+                    } else if (Math.abs(dz - (a.sz + b.sz) / 2) < EPS && overlapX > 0.5 && overlapY > 0.5) {
+                        const area = Math.round(overlapX * overlapY);
+                        matched = {
+                            singleArea: area,
+                            center: [(Math.max(a.x - a.sx / 2, b.x - b.sx / 2) + Math.min(a.x + a.sx / 2, b.x + b.sx / 2)) / 2, (Math.max(a.y - a.sy / 2, b.y - b.sy / 2) + Math.min(a.y + a.sy / 2, b.y + b.sy / 2)) / 2, a.z + (a.z < b.z ? a.sz / 2 : -a.sz / 2)],
+                            planeSize: [overlapX, overlapY],
+                            axis: 'Z'
+                        };
+                    } else if (Math.abs(dy - (a.sy + b.sy) / 2) < EPS && overlapX > 0.5 && overlapZ > 0.5) {
+                        const area = Math.round(overlapX * overlapZ);
+                        matched = {
+                            singleArea: area,
+                            center: [(Math.max(a.x - a.sx / 2, b.x - b.sx / 2) + Math.min(a.x + a.sx / 2, b.x + b.sx / 2)) / 2, a.y + (a.y < b.y ? a.sy / 2 : -a.sy / 2), (Math.max(a.z - a.sz / 2, b.z - b.sz / 2) + Math.min(a.z + a.sz / 2, b.z + b.sz / 2)) / 2],
+                            planeSize: [overlapX, overlapZ],
+                            axis: 'Y'
+                        };
+                    }
+
+                    if (matched) {
+                        contactPairs.push(matched);
+                        singleContactSum += matched.singleArea;
+                        const fKey = areaToFaceKey(lvl.boxType, matched.singleArea);
+                        if (!breakdownByFace[fKey]) {
+                            breakdownByFace[fKey] = { spots: 0, faces: 0, area: 0, unitArea: matched.singleArea };
+                        }
+                        breakdownByFace[fKey].spots += 1;
+                        breakdownByFace[fKey].faces += 2;
+                        breakdownByFace[fKey].area += matched.singleArea * 2;
+                    }
+                }
+            }
+
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+            state.boxes.forEach(b => {
+                minX = Math.min(minX, b.x - b.sx / 2); maxX = Math.max(maxX, b.x + b.sx / 2);
+                minY = Math.min(minY, b.y - b.sy / 2); maxY = Math.max(maxY, b.y + b.sy / 2);
+                minZ = Math.min(minZ, b.z - b.sz / 2); maxZ = Math.max(maxZ, b.z + b.sz / 2);
+            });
+            const dimX = Math.round(maxX - minX);
+            const dimY = Math.round(maxY - minY);
+            const dimZ = Math.round(maxZ - minZ);
+            const dimsStr = `${dimX}×${dimZ}×${dimY}cm`;
+
+            const isAllConnected = checkConnectivity(state.boxes);
+            const rawTotalArea = activeCount * lvl.singleArea;
+            const expectedReducedFaces = contactPairs.length * 2;
+            const expectedReducedArea = singleContactSum * 2;
+            const expectedFinalArea = rawTotalArea - expectedReducedArea;
+            const expectedFaceKeys = ['cube_25', 'vita_50', 'vita_40', 'vita_20'].filter(k => breakdownByFace[k]);
+
+            state.currentAnalysis = {
+                activeCount,
+                contactSpots: contactPairs.length,
+                isAllConnected,
+                dimsStr,
+                rawTotalArea,
+                breakdownByFace,
+                expectedFaceKeys,
+                expectedReducedFaces,
+                expectedReducedArea,
+                expectedFinalArea
+            };
+
+            renderHighlightContactPlanes(contactPairs);
+
+            const dict = I18N[state.lang];
+            document.getElementById('info-contact-spots').textContent = dict.spotsFormat(contactPairs.length);
+            const connBadge = document.getElementById('connectivity-badge');
+            if (isAllConnected) {
+                connBadge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+                connBadge.textContent = dict.connReady(dimsStr);
+            } else {
+                connBadge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800";
+                connBadge.textContent = dict.connDisconnected;
+            }
+
+            if (showBanner && contactPairs.length > 0) {
+                showFloatingBanner(dict.snapBanner(contactPairs.length));
+            }
+        }
+
+        function checkConnectivity(boxes) {
+            if (boxes.length <= 1) return true;
+            const adj = Array.from({ length: boxes.length }, () => []);
+            const EPS = 0.15;
+            for (let i = 0; i < boxes.length; i++) {
+                for (let j = i + 1; j < boxes.length; j++) {
+                    const a = boxes[i], b = boxes[j];
+                    const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y), dz = Math.abs(a.z - b.z);
+                    const ox = Math.min(a.x + a.sx / 2, b.x + b.sx / 2) - Math.max(a.x - a.sx / 2, b.x - b.sx / 2);
+                    const oy = Math.min(a.y + a.sy / 2, b.y + b.sy / 2) - Math.max(a.y - a.sy / 2, b.y - b.sy / 2);
+                    const oz = Math.min(a.z + a.sz / 2, b.z + b.sz / 2) - Math.max(a.z - a.sz / 2, b.z - b.sz / 2);
+                    const touchX = Math.abs(dx - (a.sx + b.sx) / 2) < EPS && oy > 0.5 && oz > 0.5;
+                    const touchZ = Math.abs(dz - (a.sz + b.sz) / 2) < EPS && ox > 0.5 && oy > 0.5;
+                    const touchY = Math.abs(dy - (a.sy + b.sy) / 2) < EPS && ox > 0.5 && oz > 0.5;
+                    if (touchX || touchZ || touchY) {
+                        adj[i].push(j);
+                        adj[j].push(i);
+                    }
+                }
+            }
+            const visited = new Set([0]);
+            const queue = [0];
+            while (queue.length > 0) {
+                const u = queue.shift();
+                for (const v of adj[u]) {
+                    if (!visited.has(v)) {
+                        visited.add(v);
+                        queue.push(v);
+                    }
+                }
+            }
+            return visited.size === boxes.length;
+        }
+
+        function showFloatingBanner(text) {
+            const banner = document.getElementById('floating-snap-banner');
+            banner.textContent = text;
+            banner.classList.remove('hidden');
+        }
+
+        // ==================== 三步分步核对与启发式纠错 ====================
+        function verifyStudentDeduction() {
+            const lvl = LEVELS[state.currentLevelIndex];
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            const ana = state.currentAnalysis;
+            const dict = I18N[state.lang];
+            const fb = document.getElementById('feedback-box');
+            fb.classList.remove('hidden');
+
+            if (!ana.isAllConnected || ana.contactSpots === 0) {
+                fb.className = "mt-3 p-3 rounded-xl text-xs leading-relaxed border bg-amber-50 border-amber-300 text-amber-950";
+                fb.innerHTML = dict.errDisconnected(ana.activeCount);
+                return;
+            }
+
+            const selectedKeys = ['cube_25', 'vita_50', 'vita_40', 'vita_20'].filter(k => state.selectedFaceTypes.has(k));
+            if (selectedKeys.length === 0) {
+                fb.className = "mt-3 p-3 rounded-xl text-xs leading-relaxed border bg-rose-50 border-rose-200 text-rose-800";
+                fb.innerHTML = dict.errStep1Empty;
+                return;
+            }
+
+            const isFirstAttemptForThisPose = (lvlStat.submitCount === 0);
+            lvlStat.submitCount += 1;
+            state.studentRecord.totalSubmissions += 1;
+
+            const errors = [];
+
+            const step1Match = selectedKeys.length === ana.expectedFaceKeys.length &&
+                               selectedKeys.every(k => ana.expectedFaceKeys.includes(k));
+            if (!step1Match) {
+                const actualNames = ana.expectedFaceKeys.map(k => state.lang === 'zh' ? FACE_CATALOG[k].zh : FACE_CATALOG[k].en).join(' + ');
+                errors.push(dict.errStep1Mismatch(actualNames));
+            } else {
+                selectedKeys.forEach(k => {
+                    const info = FACE_CATALOG[k];
+                    const name = state.lang === 'zh' ? info.zh : info.en;
+                    const expectedData = ana.breakdownByFace[k];
+                    const uFaces = parseInt(document.getElementById(`sub-faces-${k}`)?.value, 10);
+                    const uSubArea = parseInt(document.getElementById(`sub-area-${k}`)?.value, 10);
+
+                    if (isNaN(uFaces) || isNaN(uSubArea)) {
+                        errors.push(dict.errStep2Incomplete(name));
+                    } else if (uFaces !== expectedData.faces) {
+                        if (uFaces === expectedData.spots) {
+                            errors.push(dict.errStep2FacesJoint(name, expectedData.spots, expectedData.faces));
+                        } else {
+                            errors.push(dict.errStep2FacesWrong(name, expectedData.faces));
+                        }
+                    } else if (uSubArea !== expectedData.area) {
+                        errors.push(dict.errStep2AreaWrong(name, expectedData.faces, info.area, expectedData.area));
+                    }
+                });
+            }
+
+            const userReducedTotal = parseInt(document.getElementById('ans-reduced-area').value, 10);
+            const userFinalTotal = parseInt(document.getElementById('ans-final-area').value, 10);
+            if (isNaN(userReducedTotal) || isNaN(userFinalTotal)) {
+                errors.push(dict.errStep3Incomplete);
+            } else {
+                if (userReducedTotal !== ana.expectedReducedArea) {
+                    errors.push(dict.errStep3ReducedWrong);
+                }
+                if (userFinalTotal !== ana.expectedFinalArea) {
+                    errors.push(dict.errStep3FinalWrong(ana.rawTotalArea));
+                }
+            }
+
+            if (errors.length > 0) {
+                appendActionLog(`[${lvl.shortTitleEn}] Derivation check failed (Attempt #${lvlStat.submitCount})`);
+                saveCurrentStudentRecord();
+                fb.className = "mt-3 p-3 rounded-xl text-xs leading-relaxed border bg-rose-50 border-rose-300 text-rose-900 space-y-1";
+                fb.innerHTML = dict.errHeader + errors.map(e => `<div>${e}</div>`).join('');
+                return;
+            }
+
+            if (isFirstAttemptForThisPose) {
+                lvlStat.firstTrySuccess += 1;
+                state.studentRecord.firstTrySuccessCount += 1;
+            }
+
+            const targetOptimal = lvl.isCustom ? state.customOptimalArea : lvl.optimalArea;
+            const signature = `${ana.activeCount}_${ana.expectedFinalArea}_${ana.expectedReducedFaces}_${ana.expectedFaceKeys.join('+')}`;
+            const alreadyRecorded = lvlStat.verifiedCards.some(c => c.signature === signature);
+            const isOptimal = (ana.expectedFinalArea <= targetOptimal);
+
+            const breakdownSummaryZh = ana.expectedFaceKeys.map(k => `${FACE_CATALOG[k].zh.split(' ')[0]}×${ana.breakdownByFace[k].faces}面`).join(' + ');
+            const breakdownSummaryEn = ana.expectedFaceKeys.map(k => `${FACE_CATALOG[k].en.split(' ')[0]}×${ana.breakdownByFace[k].faces}`).join(' + ');
+
+            if (!alreadyRecorded) {
+                lvlStat.verifiedCards.push({
+                    signature,
+                    boxCount: ana.activeCount,
+                    dimsStr: ana.dimsStr,
+                    breakdownZh: breakdownSummaryZh,
+                    breakdownEn: breakdownSummaryEn,
+                    reducedFaces: ana.expectedReducedFaces,
+                    reducedArea: ana.expectedReducedArea,
+                    finalArea: ana.expectedFinalArea,
+                    isOptimal
+                });
+            }
+
+            const countOk = lvlStat.verifiedCards.length >= lvl.requiredConfigs;
+            const optOk = lvlStat.verifiedCards.some(c => c.isOptimal);
+            if (countOk && optOk) {
+                lvlStat.completed = true;
+            }
+
+            appendActionLog(`[${lvl.shortTitleEn}] Verified ${ana.activeCount}-box layout (${breakdownSummaryEn}, final ${ana.expectedFinalArea}cm²)`);
+            updateLevelStatusUI();
+            renderLevelTabs();
+            renderVerifiedCards();
+            updateHUD();
+            saveCurrentStudentRecord();
+
+            let nextHint = "";
+            if (lvlStat.completed) {
+                if (state.currentLevelIndex < LEVELS.length - 1) {
+                    nextHint = `<div class="mt-2"><button type="button" onclick="loadLevel(${state.currentLevelIndex + 1})" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold shadow-sm transition">${dict.successNextBtn}</button></div>`;
+                } else {
+                    nextHint = `<div class="mt-2 font-extrabold text-emerald-800">${dict.successAllDone}</div>`;
+                }
+            } else if (!optOk) {
+                nextHint = `<div class="mt-1 text-amber-800 font-bold">${dict.successNeedOptimal(targetOptimal)}</div>`;
+            } else {
+                nextHint = `<div class="mt-1 text-sky-800 font-bold">${dict.successNeedMore(lvl.requiredConfigs - lvlStat.verifiedCards.length)}</div>`;
+            }
+
+            fb.className = "mt-3 p-3.5 rounded-xl text-xs leading-relaxed border bg-emerald-50 border-emerald-300 text-emerald-950 animate-pop";
+            fb.innerHTML = dict.successHeader(ana.rawTotalArea, ana.expectedReducedArea, ana.expectedFinalArea) + nextHint;
+        }
+
+        function saveQualitativeReflection() {
+            const text = document.getElementById('input-qualitative-reason').value.trim();
+            const oddText = document.getElementById('input-odd-box-answer').value.trim();
+            if (!text && !oddText) return;
+
+            const lvl = LEVELS[state.currentLevelIndex];
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            if (text) {
+                lvlStat.qualitativeText = text;
+                appendActionLog(`[${lvl.shortTitleEn}] Submitted rule reflection`);
+            }
+            if (lvl.hasOddInquiry && oddText) {
+                state.studentRecord.oddBoxInquiryAnswer = oddText;
+                appendActionLog(`[${lvl.shortTitleEn}] Submitted odd-box inquiry answer`);
+            }
+            saveCurrentStudentRecord();
+
+            const tip = document.getElementById('qualitative-saved-tip');
+            tip.classList.remove('hidden');
+        }
+
+        function renderVerifiedCards() {
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            const dict = I18N[state.lang];
+            const container = document.getElementById('discovered-cards-container');
+
+            if (lvlStat.verifiedCards.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        ${dict.cardsEmpty}
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = lvlStat.verifiedCards.map((c, idx) => {
+                const detailText = state.lang === 'zh' ? c.breakdownZh : c.breakdownEn;
+                const countPrefix = c.boxCount ? `${c.boxCount} boxes · ` : '';
+                return `
+                    <div class="p-3 rounded-xl border-2 ${c.isOptimal ? 'bg-amber-50/90 border-amber-400 shadow-sm' : 'bg-slate-50 border-slate-200'} space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-slate-800">${dict.cardTitle(idx + 1, `${countPrefix}${c.dimsStr}`)}</span>
+                            ${c.isOptimal ? `<span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black">${dict.cardOptimal}</span>` : ''}
+                        </div>
+                        <div class="text-[11px] text-slate-600 font-medium">${detailText}</div>
+                        <div class="flex items-center justify-between pt-1 border-t border-slate-200/70 text-xs">
+                            <span class="text-emerald-700 font-bold">${dict.cardSaved(c.reducedArea)}</span>
+                            <span class="text-amber-800 font-black">${dict.cardFinal(c.finalArea)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateHUD() {
+            if (!state.studentRecord) return;
+            const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+            document.getElementById('hud-actions').textContent = state.studentRecord.totalActions;
+            document.getElementById('hud-level-saved').textContent = lvlStat.verifiedCards.length;
+        }
+
+        // ==================== 教师后台密码保护与全班分析看板 ====================
+        document.getElementById('btn-open-teacher-auth').addEventListener('click', () => {
+            saveCurrentStudentRecord();
+            document.getElementById('input-teacher-pwd').value = "";
+            document.getElementById('teacher-pwd-error').classList.add('hidden');
+            document.getElementById('teacher-pwd-modal').classList.remove('hidden');
+        });
+
+        function closeTeacherPwdModal() {
+            document.getElementById('teacher-pwd-modal').classList.add('hidden');
+        }
+
+        function verifyTeacherPassword() {
+            const pwd = document.getElementById('input-teacher-pwd').value.trim();
+            if (pwd === "6001") {
+                closeTeacherPwdModal();
+                openTeacherDashboard();
+            } else {
+                document.getElementById('teacher-pwd-error').classList.remove('hidden');
+            }
+        }
+
+        function openTeacherDashboard() {
+            const allRecords = Object.values(loadAllRecordsFromStorage());
+            const count = allRecords.length;
+            const dict = I18N[state.lang];
+
+            document.getElementById('dash-student-count').textContent = dict.unitPeople(count);
+
+            if (count > 0) {
+                const avgTime = Math.round(allRecords.reduce((s, r) => s + r.totalTimeSec, 0) / count);
+                const avgActions = Math.round(allRecords.reduce((s, r) => s + r.totalActions, 0) / count);
+
+                let totalSub = 0, totalFirstOk = 0;
+                allRecords.forEach(r => {
+                    totalSub += r.totalSubmissions;
+                    totalFirstOk += r.firstTrySuccessCount;
+                });
+                const avgAcc = totalSub > 0 ? Math.round((totalFirstOk / totalSub) * 100) : 0;
+
+                document.getElementById('dash-avg-time').textContent = dict.unitSec(avgTime);
+                document.getElementById('dash-avg-actions').textContent = dict.unitTimesVal(avgActions);
+                document.getElementById('dash-avg-accuracy').textContent = `${avgAcc}%`;
+            }
+
+            const tbody = document.getElementById('dash-students-tbody');
+            tbody.innerHTML = allRecords.map(r => {
+                const acc = r.totalSubmissions > 0 ? Math.round((r.firstTrySuccessCount / r.totalSubmissions) * 100) : 0;
+                const completedCount = r.levels.filter(l => l.completed).length;
+                const key = `${r.studentId}_${r.studentName}`;
+                return `
+                    <tr class="hover:bg-sky-50/70 transition cursor-pointer" onclick="inspectStudentDetail('${key}')">
+                        <td class="py-2.5 px-3 font-mono font-bold text-slate-700">${r.studentId}</td>
+                        <td class="py-2.5 px-3 font-extrabold text-slate-900">${r.studentName}</td>
+                        <td class="py-2.5 px-3 font-mono text-blue-700 font-bold">${r.totalTimeSec}s (${formatTime(r.totalTimeSec)})</td>
+                        <td class="py-2.5 px-3 font-bold text-amber-700">${dict.unitTimesVal(r.totalActions)}</td>
+                        <td class="py-2.5 px-3 text-slate-600">${dict.unitTimesVal(r.scaffoldHintsUsed)}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-700">${r.firstTrySuccessCount} / ${r.totalSubmissions}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="px-2 py-0.5 rounded-full font-extrabold ${acc >= 70 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                ${acc}%
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 font-bold text-sky-700">${dict.unitLevelsVal(completedCount)}</td>
+                        <td class="py-2.5 px-3">
+                            <button type="button" class="text-sky-600 hover:underline font-bold">${dict.btnInspect}</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (state.currentStudentKey) {
+                inspectStudentDetail(state.currentStudentKey);
+            } else if (allRecords.length > 0) {
+                inspectStudentDetail(`${allRecords[0].studentId}_${allRecords[0].studentName}`);
+            }
+
+            document.getElementById('teacher-dashboard-modal').classList.remove('hidden');
+        }
+
+        function seedDemoClassData() {
+            const all = loadAllRecordsFromStorage();
+            const samples = [
+                {
+                    id: "20260802", name: "张雨桐 / Yutong Zhang", time: 620, actions: 46, hints: 2, subs: 9, firstOk: 8, passed: 7,
+                    q4: "4盒双排紧凑拼法同时重叠了4个大面和4个中面，共减少360cm²，用纸最少。",
+                    q5: "6盒拼成2×3近正方体（10×12×10cm），重合8个大面和6个中面，总面积680cm²。",
+                    q6: "24盒整箱拼成3×2×4多层近正方体（15×16×20cm），大中小三面同时重合，减少3560cm²最省纸！",
+                    q7: "在自由实验台测试了10盒（2×1×5最优1000cm²）和12盒（3×1×4最优1100cm²），发现长宽高越接近正方体越省纸。",
+                    odd: "如果是5盒、7盒等质数个奇数盒子，只能排成1排长条，无法拼成多排整齐的长方体，一旦想并排就会多出一块凸起或空缺，不仅外露表面积大、浪费包装纸，运输时也极易压变形。"
+                },
+                {
+                    id: "20260805", name: "Lucas Wong / 王梓豪", time: 685, actions: 56, hints: 2, subs: 10, firstOk: 7, passed: 7,
+                    q4: "Overlapping both Large (50cm²) and Medium (40cm²) faces in a 2×2 block hides 8 faces total.",
+                    q5: "Packing 6 cartons into a 10×12×10cm block minimizes surface area to 680cm².",
+                    q6: "24 cartons in a 15×16×20cm case overlaps Large, Medium, and Small faces together to save 3560cm².",
+                    q7: "Tested 10 cartons (1000cm²) and 12 cartons (1100cm²) in Level 7; balanced 3D factors always beat single rows.",
+                    odd: "With odd numbers like 5 or 7, boxes cannot form a complete rectangular prism without an empty gap or a sticking-out box. Even 9 (3×3) leaves fewer compact 3D stacking options than 8, 12, or 24."
+                }
+            ];
+
+            samples.forEach(s => {
+                const key = `${s.id}_${s.name}`;
+                if (!all[key]) {
+                    const rec = createFreshStudentRecord(s.name, s.id);
+                    rec.totalTimeSec = s.time;
+                    rec.totalActions = s.actions;
+                    rec.scaffoldHintsUsed = s.hints;
+                    rec.totalSubmissions = s.subs;
+                    rec.firstTrySuccessCount = s.firstOk;
+                    rec.levels.forEach((l, i) => {
+                        l.timeSpentSec = Math.round(s.time / 7);
+                        l.actionCount = Math.round(s.actions / 7);
+                        l.completed = i < s.passed;
+                    });
+                    rec.levels[3].qualitativeText = s.q4;
+                    rec.levels[4].qualitativeText = s.q5;
+                    rec.levels[5].qualitativeText = s.q6;
+                    rec.levels[6].qualitativeText = s.q7;
+                    rec.oddBoxInquiryAnswer = s.odd;
+                    rec.actionLogs = [
+                        `[10:34:12] [Level 7] Submitted odd-box inquiry answer`,
+                        `[10:31:45] [Level 7] Verified 12-box layout (final 1100cm²)`
+                    ];
+                    all[key] = rec;
+                }
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+            openTeacherDashboard();
+        }
+
+        function inspectStudentDetail(key) {
+            const all = loadAllRecordsFromStorage();
+            const r = all[key];
+            if (!r) return;
+            const dict = I18N[state.lang];
+
+            document.getElementById('detail-student-tag').textContent = `${r.studentName} (${r.studentId})`;
+
+            const l4Text = r.levels[3]?.qualitativeText || dict.qualNotFilled;
+            const l5Text = r.levels[4]?.qualitativeText || dict.qualNotFilled;
+            const l6Text = r.levels[5]?.qualitativeText || dict.qualNotFilled;
+            const l7Text = r.levels[6]?.qualitativeText || dict.qualNotFilled;
+            const oddText = r.oddBoxInquiryAnswer || dict.qualNotFilled;
+            document.getElementById('detail-qualitative-text').innerHTML = `
+                <div><strong class="text-indigo-800">${dict.qualL4Label}</strong>${l4Text}</div>
+                <div class="pt-1 border-t border-slate-100"><strong class="text-indigo-800">${dict.qualL5Label}</strong>${l5Text}</div>
+                <div class="pt-1 border-t border-slate-100"><strong class="text-indigo-800">${dict.qualL6Label}</strong>${l6Text}</div>
+                <div class="pt-1 border-t border-slate-100"><strong class="text-indigo-800">${dict.qualL7Label}</strong>${l7Text}</div>
+                <div class="pt-1 border-t border-amber-200 bg-amber-50/70 p-1.5 rounded"><strong class="text-amber-900">${dict.qualOddLabel}</strong>${oddText}</div>
+            `;
+
+            const logBox = document.getElementById('detail-action-logs');
+            logBox.innerHTML = r.actionLogs.length > 0
+                ? r.actionLogs.slice(0, 30).map(l => `<div>${l}</div>`).join('')
+                : `<div>${dict.noLogs}</div>`;
+        }
+
+        function closeTeacherDashboard() {
+            document.getElementById('teacher-dashboard-modal').classList.add('hidden');
+        }
+
+        function exportAllStudentsCSV() {
+            const allRecords = Object.values(loadAllRecordsFromStorage());
+            const headers = [
+                "Student_ID", "Student_Name", "Total_Time_Sec", "Total_Drag_Rotate_Actions",
+                "Scaffold_Hints_Used", "Total_Submissions", "First_Try_Correct",
+                "First_Try_Accuracy_Pct", "Levels_Completed_OutOf_7",
+                "L1_Time_Sec", "L2_Time_Sec", "L3_Time_Sec", "L4_Time_Sec", "L5_Time_Sec", "L6_Time_Sec", "L7_Time_Sec",
+                "L4_Reflection", "L5_Reflection", "L6_Reflection", "L7_Custom_Reflection",
+                "Odd_Number_Cartons_Analysis"
+            ];
+
+            const rows = allRecords.map(r => {
+                const acc = r.totalSubmissions > 0 ? ((r.firstTrySuccessCount / r.totalSubmissions) * 100).toFixed(1) : "0.0";
+                const comp = r.levels.filter(l => l.completed).length;
+                const esc = (str) => (str || "").replace(/"/g, '""');
+                return [
+                    `"${r.studentId}"`,
+                    `"${r.studentName}"`,
+                    r.totalTimeSec,
+                    r.totalActions,
+                    r.scaffoldHintsUsed,
+                    r.totalSubmissions,
+                    r.firstTrySuccessCount,
+                    acc,
+                    comp,
+                    r.levels[0]?.timeSpentSec || 0,
+                    r.levels[1]?.timeSpentSec || 0,
+                    r.levels[2]?.timeSpentSec || 0,
+                    r.levels[3]?.timeSpentSec || 0,
+                    r.levels[4]?.timeSpentSec || 0,
+                    r.levels[5]?.timeSpentSec || 0,
+                    r.levels[6]?.timeSpentSec || 0,
+                    `"${esc(r.levels[3]?.qualitativeText)}"`,
+                    `"${esc(r.levels[4]?.qualitativeText)}"`,
+                    `"${esc(r.levels[5]?.qualitativeText)}"`,
+                    `"${esc(r.levels[6]?.qualitativeText)}"`,
+                    `"${esc(r.oddBoxInquiryAnswer)}"`
+                ].join(",");
+            });
+
+            const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Vitasoy_IBL_Class_Analytics_7Levels_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== Three.js 3D 渲染（含纹理缓存优化，24盒极速流畅） ====================
+        let scene, camera, renderer;
+        let boxMeshes = [];
+        let contactPlanesGroup;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        let dragOffset = new THREE.Vector3();
+
+        let interactionMode = 'none';
+        let draggedBoxData = null;
+        let dragStartPos = { x: 0, z: 0 };
+        let prevPointer = { x: 0, y: 0 };
+        let spherical = { radius: 34, theta: 0.52, phi: 0.92 };
+        const textureCache = {};
+
+        function toggleXRayMode() {
+            state.isXRay = !state.isXRay;
+            const btn = document.getElementById('btn-toggle-xray');
+            const dict = I18N[state.lang];
+            if (state.isXRay) {
+                btn.className = "px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1";
+                btn.textContent = dict.xrayOn;
+            } else {
+                btn.className = "px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1";
+                btn.textContent = dict.xrayOff;
+            }
+            rebuildSceneBoxes();
+            analyzeCurrentArrangement(false);
+        }
+
+        function getCachedVitasoyTexture(faceKind, dimText) {
+            const key = `vita_${faceKind}_${dimText}`;
+            if (textureCache[key]) return textureCache[key];
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, 256, 256);
+            grad.addColorStop(0, '#0284C7');
+            grad.addColorStop(1, '#0369A1');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(6, 6, 244, 244);
+
+            if (faceKind === 'front') {
+                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                ctx.font = '900 58px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('VITASOY', 128, 155);
+
+                ctx.fillStyle = '#DC2626';
+                ctx.beginPath();
+                ctx.ellipse(62, 42, 34, 18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('Vitasoy', 62, 45);
+
+                ctx.save();
+                ctx.translate(128, 132);
+                ctx.rotate(-0.18);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '900 44px Inter, sans-serif';
+                ctx.fillText('Vitasoy', 0, -2);
+                ctx.font = '800 18px Inter, sans-serif';
+                ctx.fillStyle = '#E0F2FE';
+                ctx.fillText('SOY MILK', 0, 24);
+                ctx.restore();
+
+                ctx.fillStyle = '#1E3A8A';
+                ctx.fillRect(196, 118, 34, 86);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 13px Inter, sans-serif';
+                ['2', '5', '0', 'mL'].forEach((ch, idx) => {
+                    ctx.fillText(ch, 213, 138 + idx * 19);
+                });
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 14px Inter, sans-serif';
+                ctx.fillText('Net: 250 mL', 92, 224);
+                ctx.fillStyle = '#FDE047';
+                ctx.font = 'extrabold 16px Inter, sans-serif';
+                ctx.fillText(dimText, 128, 244);
+            } else if (faceKind === 'side') {
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.fillRect(28, 36, 200, 135);
+                ctx.fillStyle = '#0369A1';
+                ctx.font = 'bold 15px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Nutrition Facts', 128, 58);
+                ctx.fillRect(38, 66, 180, 3);
+                for (let row = 0; row < 4; row++) {
+                    ctx.fillStyle = '#64748B';
+                    ctx.fillRect(42, 82 + row * 20, 172, 2);
+                }
+                ctx.fillStyle = '#1E3A8A';
+                ctx.fillRect(108, 12, 40, 18);
+
+                ctx.fillStyle = '#FDE047';
+                ctx.font = 'extrabold 18px Inter, sans-serif';
+                ctx.fillText(dimText, 128, 220);
+            } else {
+                ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(20, 128);
+                ctx.lineTo(236, 128);
+                ctx.stroke();
+
+                ctx.fillStyle = '#E2E8F0';
+                ctx.beginPath();
+                ctx.arc(178, 76, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#94A3B8';
+                ctx.stroke();
+
+                ctx.fillStyle = '#FDE047';
+                ctx.font = 'extrabold 20px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(dimText, 128, 185);
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            textureCache[key] = tex;
+            return tex;
+        }
+
+        function getCachedCubeTexture(dimText) {
+            const key = `cube_${dimText}`;
+            if (textureCache[key]) return textureCache[key];
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, 256, 256);
+            grad.addColorStop(0, '#38BDF8');
+            grad.addColorStop(1, '#0EA5E9');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            ctx.fillStyle = '#FBBF24';
+            ctx.fillRect(112, 0, 32, 256);
+            ctx.fillRect(0, 112, 256, 32);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(58, 92, 140, 72);
+            ctx.strokeStyle = '#0284C7';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(58, 92, 140, 72);
+
+            ctx.fillStyle = '#0F172A';
+            ctx.font = '900 24px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(dimText, 128, 128);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            textureCache[key] = tex;
+            return tex;
+        }
+
+        function initThreeJS() {
+            if (renderer) return;
+            const container = document.getElementById('canvas-container');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 500);
+            updateCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            dirLight.position.set(25, 45, 30);
+            scene.add(dirLight);
+
+            const tableGeo = new THREE.PlaneGeometry(66, 56);
+            const tableMat = new THREE.MeshLambertMaterial({ color: 0xF8FAFC });
+            const tableMesh = new THREE.Mesh(tableGeo, tableMat);
+            tableMesh.rotation.x = -Math.PI / 2;
+            tableMesh.position.y = -0.02;
+            scene.add(tableMesh);
+
+            const gridHelper = new THREE.GridHelper(60, 30, 0x94A3B8, 0xCBD5E1);
+            scene.add(gridHelper);
+
+            contactPlanesGroup = new THREE.Group();
+            scene.add(contactPlanesGroup);
+
+            const dom = renderer.domElement;
+            dom.addEventListener('pointerdown', onPointerDown);
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+
+            dom.addEventListener('wheel', e => {
+                e.preventDefault();
+                spherical.radius = Math.max(16, Math.min(82, spherical.radius + e.deltaY * 0.025));
+                updateCameraPosition();
+            }, { passive: false });
+
+            window.addEventListener('resize', () => {
+                if (!renderer) return;
+                const nw = container.clientWidth;
+                const nh = container.clientHeight;
+                camera.aspect = nw / nh;
+                camera.updateProjectionMatrix();
+                renderer.setSize(nw, nh);
+            });
+
+            animate();
+        }
+
+        function updateCameraPosition() {
+            if (!camera) return;
+            camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+            camera.position.y = 6 + spherical.radius * Math.cos(spherical.phi);
+            camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+            camera.lookAt(0, 6, 0);
+        }
+
+        function setCameraPreset(preset) {
+            if (preset === 'iso') { spherical.theta = 0.52; spherical.phi = 0.92; }
+            else if (preset === 'top') { spherical.theta = 0; spherical.phi = 0.14; }
+            else if (preset === 'front') { spherical.theta = 0; spherical.phi = 1.42; }
+            updateCameraPosition();
+        }
+
+        function updateMouseCoords(e) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        function onPointerDown(e) {
+            if (!renderer) return;
+            updateMouseCoords(e);
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(boxMeshes, false);
+            if (intersects.length > 0) {
+                const hitMesh = intersects[0].object;
+                const boxData = state.boxes.find(b => b.id === hitMesh.userData.boxId);
+                if (boxData) {
+                    interactionMode = 'dragBox';
+                    draggedBoxData = boxData;
+                    dragStartPos = { x: boxData.x, z: boxData.z };
+                    selectBox(boxData.id);
+
+                    dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, boxData.y, 0));
+                    const hitPt = new THREE.Vector3();
+                    raycaster.ray.intersectPlane(dragPlane, hitPt);
+                    dragOffset.subVectors(hitMesh.position, hitPt);
+                    renderer.domElement.style.cursor = 'grabbing';
+                }
+            } else {
+                interactionMode = 'orbitCamera';
+                prevPointer = { x: e.clientX, y: e.clientY };
+                renderer.domElement.style.cursor = 'grabbing';
+            }
+        }
+
+        function onPointerMove(e) {
+            if (interactionMode === 'none') return;
+            if (interactionMode === 'orbitCamera') {
+                const dx = e.clientX - prevPointer.x;
+                const dy = e.clientY - prevPointer.y;
+                spherical.theta -= dx * 0.01;
+                spherical.phi = Math.max(0.14, Math.min(Math.PI / 2 - 0.04, spherical.phi - dy * 0.01));
+                prevPointer = { x: e.clientX, y: e.clientY };
+                updateCameraPosition();
+            } else if (interactionMode === 'dragBox' && draggedBoxData) {
+                updateMouseCoords(e);
+                raycaster.setFromCamera(mouse, camera);
+                const hitPt = new THREE.Vector3();
+                if (raycaster.ray.intersectPlane(dragPlane, hitPt)) {
+                    let tx = Math.max(-28, Math.min(28, hitPt.x + dragOffset.x));
+                    let tz = Math.max(-24, Math.min(24, hitPt.z + dragOffset.z));
+                    draggedBoxData.x = tx;
+                    draggedBoxData.z = tz;
+                    applyMagneticSnap(draggedBoxData);
+                    syncMeshPositions();
+                    analyzeCurrentArrangement(false);
+                }
+            }
+        }
+
+        function onPointerUp() {
+            if (interactionMode === 'dragBox' && draggedBoxData) {
+                const dist = Math.hypot(draggedBoxData.x - dragStartPos.x, draggedBoxData.z - dragStartPos.z);
+                if (dist > 0.3) {
+                    const lvl = LEVELS[state.currentLevelIndex];
+                    const lvlStat = state.studentRecord.levels[state.currentLevelIndex];
+                    lvlStat.actionCount += 1;
+                    state.studentRecord.totalActions += 1;
+                    appendActionLog(`[${lvl.shortTitleEn}] Dragged Box #${draggedBoxData.id}`);
+                    analyzeCurrentArrangement(true);
+                    updateHUD();
+                    saveCurrentStudentRecord();
+                }
+            }
+            interactionMode = 'none';
+            draggedBoxData = null;
+            if (renderer) renderer.domElement.style.cursor = 'grab';
+        }
+
+        function rebuildSceneBoxes() {
+            if (!scene) return;
+            boxMeshes.forEach(m => scene.remove(m));
+            boxMeshes = [];
+
+            const lvl = LEVELS[state.currentLevelIndex];
+            const xrayOpacity = state.isXRay ? 0.30 : 1.0;
+            const isTransparent = state.isXRay;
+
+            state.boxes.forEach(b => {
+                const geo = new THREE.BoxGeometry(b.sx, b.sy, b.sz);
+                let mats;
+
+                if (lvl.boxType === 'cube') {
+                    const tex = getCachedCubeTexture(`5×5=25cm²`);
+                    const m = new THREE.MeshLambertMaterial({ map: tex, transparent: isTransparent, opacity: xrayOpacity });
+                    mats = [m, m, m, m, m, m];
+                } else {
+                    const frontMat = new THREE.MeshLambertMaterial({
+                        map: getCachedVitasoyTexture('front', `${b.sx}×${b.sy}=${b.sx * b.sy}cm²`),
+                        transparent: isTransparent, opacity: xrayOpacity
+                    });
+                    const sideMat = new THREE.MeshLambertMaterial({
+                        map: getCachedVitasoyTexture('side', `${b.sz}×${b.sy}=${b.sz * b.sy}cm²`),
+                        transparent: isTransparent, opacity: xrayOpacity
+                    });
+                    const topMat = new THREE.MeshLambertMaterial({
+                        map: getCachedVitasoyTexture('top', `${b.sx}×${b.sz}=${b.sx * b.sz}cm²`),
+                        transparent: isTransparent, opacity: xrayOpacity
+                    });
+                    mats = [sideMat, sideMat, topMat, topMat, frontMat, frontMat];
+                }
+
+                const mesh = new THREE.Mesh(geo, mats);
+                mesh.position.set(b.x, b.y, b.z);
+                mesh.userData.boxId = b.id;
+
+                const edgesGeo = new THREE.EdgesGeometry(geo);
+                const lineMat = new THREE.LineBasicMaterial({ color: 0x0369A1 });
+                const wire = new THREE.LineSegments(edgesGeo, lineMat);
+                wire.name = 'outline';
+                mesh.add(wire);
+
+                scene.add(mesh);
+                boxMeshes.push(mesh);
+                b.mesh = mesh;
+            });
+
+            highlightSelectedBoxOutline();
+        }
+
+        function syncMeshPositions() {
+            state.boxes.forEach(b => {
+                if (b.mesh) b.mesh.position.set(b.x, b.y, b.z);
+            });
+        }
+
+        function highlightSelectedBoxOutline() {
+            boxMeshes.forEach(m => {
+                const wire = m.getObjectByName('outline');
+                if (wire) {
+                    const isSel = m.userData.boxId === state.selectedBoxId;
+                    wire.material.color.setHex(isSel ? 0xF59E0B : 0x0369A1);
+                }
+            });
+        }
+
+        function renderHighlightContactPlanes(contactPairs) {
+            if (!contactPlanesGroup) return;
+            while (contactPlanesGroup.children.length > 0) {
+                contactPlanesGroup.remove(contactPlanesGroup.children[0]);
+            }
+
+            const planeMat = new THREE.MeshBasicMaterial({
+                color: 0xF97316,
+                transparent: true,
+                opacity: state.isXRay ? 0.88 : 0.72,
+                side: THREE.DoubleSide
+            });
+
+            contactPairs.forEach(cp => {
+                const [pw, ph] = cp.planeSize;
+                const geo = new THREE.PlaneGeometry(pw * 0.96, ph * 0.96);
+                const plane = new THREE.Mesh(geo, planeMat);
+                plane.position.set(cp.center[0], cp.center[1], cp.center[2]);
+
+                const edgeGeo = new THREE.EdgesGeometry(geo);
+                const edgeMat = new THREE.LineBasicMaterial({ color: 0x10B981 });
+                plane.add(new THREE.LineSegments(edgeGeo, edgeMat));
+
+                if (cp.axis === 'X') plane.rotation.y = Math.PI / 2;
+                else if (cp.axis === 'Y') plane.rotation.x = Math.PI / 2;
+
+                contactPlanesGroup.add(plane);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+    </script>
+</body>
+</html>
